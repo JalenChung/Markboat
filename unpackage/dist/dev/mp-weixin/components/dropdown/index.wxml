@@ -1,1 +1,0 @@
-<view data-nodeType="dropdown" data-nodeName="{{b}}" class="{{['dropdown', c]}}"><label>{{a}}</label><view class="dropdown-menu"><slot></slot></view></view>
