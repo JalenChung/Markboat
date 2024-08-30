@@ -1,0 +1,37 @@
+{
+  "hash": "6c122f04",
+  "configHash": "f4093db6",
+  "lockfileHash": "63f5a452",
+  "browserHash": "828cc0a7",
+  "optimized": {
+    "markdown-it": {
+      "src": "../../../../../node_modules/markdown-it/index.mjs",
+      "file": "markdown-it.js",
+      "fileHash": "b21593cc",
+      "needsInterop": false
+    },
+    "markdown-it-toc-done-right": {
+      "src": "../../../../../node_modules/markdown-it-toc-done-right/dist/markdownItTocDoneRight.mjs",
+      "file": "markdown-it-toc-done-right.js",
+      "fileHash": "9259ac71",
+      "needsInterop": false
+    },
+    "markdown-it-anchor": {
+      "src": "../../../../../node_modules/markdown-it-anchor/dist/markdownItAnchor.mjs",
+      "file": "markdown-it-anchor.js",
+      "fileHash": "a51ee775",
+      "needsInterop": false
+    },
+    "turndown": {
+      "src": "../../../../../node_modules/turndown/lib/turndown.browser.es.js",
+      "file": "turndown.js",
+      "fileHash": "13950a72",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-CSAU5B4Q": {
+      "file": "chunk-CSAU5B4Q.js"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+.dropdown {
+    font-size: 13px;
+    float: left;
+    position: relative;
+    padding: 2px 6px;
+    border-radius: 5px;
+    margin: 0 5px;
+    cursor: pointer;
+
+    .dropdown-menu {
+        min-width: 300px;
+        height: auto;
+        position: absolute;
+        top: 20px;
+        left: 0px;
+        border: 1px solid #555555;
+        background-color: #181818;
+        padding: 10px;
+        border-radius: 6px;
+        display: none;
+        z-index: 30;
+    }
+}
+.dropdown:hover {
+    background-color: rgba(65, 65, 65, 0.841);
+}
+.active {
+    background-color: rgba(65, 65, 65, 0.841);
+
+    .dropdown-menu {
+        display: block;
+    }
+}

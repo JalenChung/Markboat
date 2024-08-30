@@ -1,0 +1,1 @@
+<view class="dropdown-item"><slot></slot></view>
