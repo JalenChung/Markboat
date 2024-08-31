@@ -55,24 +55,32 @@
 						<towxml v-if="platform != 'h5'" :nodes="wxmlContent" />
 					</view>
 				</view>
-				<view class="shortcut">
-					<view class="catalogController" @click="catalogController">
-						<view class="list-img"></view>
-						<view class="slash-img" :style="slashShow"></view>
-					</view>
-					<view @click="testFn">test</view>
-					<view>
-						<input type="text" name="" id="" value="134">
-					</view>
-					<view>1</view>
-					<view class="switcher" v-if="showSwitcher" @click="displayMode = displayMode == '1' ? '2' : '1'"
-						:class="displayMode == '1' ? 'show-md' : 'show-html'">
-						<view class="md-img"></view>
-						<view class="html-img"></view>
-					</view>
+			</view>
+		</view>
+		<view class="placeholder"></view>
+		<view class="footer">
+			<view class="inp-box" v-if="platform != 'h5'">
+				<input type="text" name="footerInp" id="footerInp" v-model="modifiedText" @input="footerInpFn">
+				<button>✔</button>
+			</view>
+			<view class="shortcut">
+				<view class="catalogController" @click="catalogController">
+					<view class="list-img"></view>
+					<view class="slash-img" :style="slashShow"></view>
+				</view>
+				<view @click="testFn">test</view>
+				<view>
+					<input type="text" name="" id="" value="134">
+				</view>
+				<view>1</view>
+				<view class="switcher" v-if="showSwitcher" @click="displayMode = displayMode == '1' ? '2' : '1'"
+					:class="displayMode == '1' ? 'show-md' : 'show-html'">
+					<view class="md-img"></view>
+					<view class="html-img"></view>
 				</view>
 			</view>
 		</view>
+
 		<view class="import-popup" :class="popupShow ? 'popup-show' : ''">
 			<view class="popup-header">
 				<view style="font-size:medium;">导入</view>
@@ -103,6 +111,7 @@ import Dropdown from '../../components/dropdown/index.vue'
 import DropdownItem from '../../components/dropdown-item/index.vue'
 import FileDropZone from '../../components/FileDropZone/index.vue'
 import Token from '../../static/js/mdToken.js'
+import throttle from '../../static/js/throttle.js'
 
 import { ref, watch, computed, onBeforeMount, onMounted, onBeforeUpdate, onUpdated } from 'vue';
 
@@ -254,28 +263,45 @@ function findElementById(htmlString, targetId) {
 
 	return null;
 }
+let modifiedText = ref('') // 【即将被修改的元素文本】，后续点击确认会修改md，并反向触发wx重构
+let modifyTargetId = null; // 【即将被修改的元素id】
+let wxmlOptions = {
+	// base: 'https://xxx.com',				// 相对资源的base路径
+	theme: 'dark',					// 主题，默认`light`
+	events: {					// 为元素绑定的事件方法
+		tap: (e) => {
+			modifyTargetId = e.currentTarget.id
+			// 找到所要修改元素的文本
+			modifiedText.value = htmlContent.value.split('id="' + modifyTargetId)[1].split('<')[0].split('>')[1]
+			console.log(modifiedText.value);
+		}
+	}
+}
 function mdInput() {
 	let res = mdParser.value.render(mdContent.value)
 	htmlContent.value = res
-
 	domIdArr = extractIds(res)
 
 	if ((platform.value != 'h5')) {
-		wxmlContent.value = towxml(htmlContent.value, 'html', {
-			// base: 'https://xxx.com',				// 相对资源的base路径
-			theme: 'dark',					// 主题，默认`light`
-			events: {					// 为元素绑定的事件方法
-				tap: (e) => {
-					let id = e.currentTarget.id
-					
-					let content = res.split('id="' + id)[1].split('<')[0].split('>')[1]
-					console.log(content);
-					
-				}
-			}
-		});
+		wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
 	}
 }
+
+let footerInpFn = throttle(() => {
+	// res.split('id="' + modifyTargetId)[1].split('<')[0].split('>')[1]
+	let strArr_id = htmlContent.value.split('id="' + modifyTargetId)
+	let strArr_id_3 = strArr_id[1].split('<')
+	// ...>
+	let str1 = strArr_id[0] + 'id="' + modifyTargetId + strArr_id_3[0].split('>')[0] + '>'
+	// >...<
+	let str2 = modifiedText.value
+	// <...
+	let str3 = '<' + strArr_id_3[1]
+	// 拼接
+	htmlContent.value = str1 + str2 + str3
+	console.log(htmlContent.value);
+	wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
+}, 1000)
 
 // 当观察到变化时执行的回调函数  
 function htmlInput(mutationsList, observer) {
