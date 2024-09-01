@@ -47,22 +47,20 @@
 				<view class="content" :class="{ 'show-html': displayMode == '2' }">
 					<textarea class="content-md" maxlength="999999999999" @input="mdInput"
 						v-model="mdContent"></textarea>
-
-					<!-- 未来，小程序端不再使用v-html，而是编译成小程序元素，点击编辑后向左跳转到md页的相关行编辑 -->
 					<view class="content-preview">
 						<div v-if="platform == 'h5'" contenteditable="true" v-html="htmlContent" id="htmlContentBox">
 						</div>
-						<towxml v-if="platform != 'h5'" :nodes="wxmlContent" />
+						<mp-html v-if="platform != 'h5'" :content="htmlContent" />
 					</view>
 				</view>
 			</view>
 		</view>
 		<view class="placeholder"></view>
 		<view class="footer">
-			<view class="inp-box" v-if="platform != 'h5'">
+			<!-- <view class="inp-box" v-if="platform != 'h5'">
 				<input type="text" name="footerInp" id="footerInp" v-model="modifiedText" @input="footerInpFn">
 				<button>✔</button>
-			</view>
+			</view> -->
 			<view class="shortcut">
 				<view class="catalogController" @click="catalogController">
 					<view class="list-img"></view>
@@ -103,19 +101,21 @@
 </template>
 
 <script setup>
+// 第三方库、插件
 import MarkdownIt from 'markdown-it'
 import toc from 'markdown-it-toc-done-right'
 import anchor from 'markdown-it-anchor'
 import Turndown from 'turndown'
+// import MpHtml from 'mp-html/dist/mp-weixin'
+// 自己封装的组件
 import Dropdown from '../../components/dropdown/index.vue'
 import DropdownItem from '../../components/dropdown-item/index.vue'
 import FileDropZone from '../../components/FileDropZone/index.vue'
+// 自己封装的函数
 import Token from '../../static/js/mdToken.js'
 import throttle from '../../static/js/throttle.js'
 
 import { ref, watch, computed, onBeforeMount, onMounted, onBeforeUpdate, onUpdated } from 'vue';
-
-let towxml = null
 
 // 运行平台
 let platform = ref('')
@@ -263,52 +263,25 @@ function findElementById(htmlString, targetId) {
 
 	return null;
 }
-let modifiedText = ref('') // 【即将被修改的元素文本】，后续点击确认会修改md，并反向触发wx重构
-let modifyTargetId = null; // 【即将被修改的元素id】
-let wxmlOptions = {
-	// base: 'https://xxx.com',				// 相对资源的base路径
-	theme: 'dark',					// 主题，默认`light`
-	events: {					// 为元素绑定的事件方法
-		tap: (e) => {
-			modifyTargetId = e.currentTarget.id
-			// 找到所要修改元素的文本
-			modifiedText.value = htmlContent.value.split('id="' + modifyTargetId)[1].split('<')[0].split('>')[1]
-			console.log(modifiedText.value);
-		}
-	}
-}
+
 function mdInput() {
 	let res = mdParser.value.render(mdContent.value)
 	htmlContent.value = res
 	domIdArr = extractIds(res)
 
-	if ((platform.value != 'h5')) {
-		wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
-	}
+	// if ((platform.value != 'h5')) {
+	// }
 }
-
-let footerInpFn = throttle(() => {
-	// res.split('id="' + modifyTargetId)[1].split('<')[0].split('>')[1]
-	let strArr_id = htmlContent.value.split('id="' + modifyTargetId)
-	let strArr_id_3 = strArr_id[1].split('<')
-	// ...>
-	let str1 = strArr_id[0] + 'id="' + modifyTargetId + strArr_id_3[0].split('>')[0] + '>'
-	// >...<
-	let str2 = modifiedText.value
-	// <...
-	let str3 = '<' + strArr_id_3[1]
-	// 拼接
-	htmlContent.value = str1 + str2 + str3
-	console.log(htmlContent.value);
-	wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
-}, 1000)
 
 // 当观察到变化时执行的回调函数  
 function htmlInput(mutationsList, observer) {
 	let newHtmlContent = document.getElementById('htmlContentBox').innerHTML
 	mdContent.value = htmlParser.value.turndown('' + newHtmlContent)
 };
+function mphtmlFn(e) {
+	console.log(e);
 
+}
 
 // 导入=======================================================
 let popupShow = ref(false)
@@ -382,7 +355,7 @@ function confirm() {
 }
 
 // 底部===========================================
-let showSwitcher = ref(false)
+let showSwitcher = ref(true)
 
 
 function createDomId(tagName) {
@@ -402,11 +375,12 @@ function createDomId(tagName) {
 	}
 }
 
+// 生命钩子 ========================================
+
 onBeforeMount(() => {
 	platform.value = process.env.UNI_PLATFORM
 
 	if (platform.value != 'h5') {
-		towxml = require("../../wxcomponents/towxml/index.js")
 	}
 
 	mdParser.value = new MarkdownIt({
@@ -491,9 +465,9 @@ onBeforeMount(() => {
 	if (uni.windowWidth > 480) {
 		document.addEventListener('mouseup', dragEnd, false);
 		document.addEventListener('mousemove', drag, false);
-		showSwitcher.value = false
+		// showSwitcher.value = false
 	} else {
-		showSwitcher.value = true
+		// showSwitcher.value = true
 	}
 
 })
