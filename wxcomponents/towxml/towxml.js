@@ -6,6 +6,9 @@ Component({
     nodes:{
       type:Object,
       value:{}
+    },
+    scrollTarget:{
+      type:String
     }
   },
   data:{

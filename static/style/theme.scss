@@ -2,7 +2,7 @@
     background-color: #181818;
     color: rgb(197, 197, 197);
     .main {
-        .catalog {
+        .catalog-container{
             background-color: #181818;
         }
         .editor {
@@ -12,18 +12,43 @@
                     border: 1px solid #313131;
                     border-right: 0px;
                 }
+                .content-md{
+                    border-left: none;
+                    border-bottom: none;
+                }
             }
         }
     }
     .footer {
         .shortcut {
             .catalogController {
-                .list-img {
-                    background-image: url(../images/list-ul-light.png);
+                .list-img-open {
+                    background-image: url(../images/eye-light.png);
                 }
-                .slash-img {
-                    background-image: url(../images/slash-light.png);
+                .list-img-close {
+                    background-image: url(../images/eye-slash-light.png);
                 }
+            }
+            .split{
+                background-color: #313131;
+            }
+            .shortcut-bold{
+                background-image: url(../images/bold-light.png);
+            }
+            .shortcut-strikethrough{
+                background-image: url(../images/strikethrough-light.png);
+            }
+            .shortcut-italic{
+                background-image: url(../images/italic-light.png);
+            }
+            .shortcut-font{
+                background-image: url(../images/font-light.png);
+            }
+            .shortcut-quote{
+                background-image: url(../images/quote-right-light.png);
+            }
+            .shortcut-line{
+                background-color: #fff;
             }
         }
     }

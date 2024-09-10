@@ -8,6 +8,13 @@ Component({
 		nodes: {
 			type: Object,
 			value: {}
+		},
+		scrollTarget: {
+			type: String
+		},
+		slideable: {
+			type: Boolean,
+			default: false
 		}
 	},
 	lifetimes: {
@@ -21,7 +28,7 @@ Component({
 					}
 				};
 			});
-			
+
 		}
 	}
 })

@@ -1,0 +1,7 @@
+function isFullWidth(char) {
+    return char.charCodeAt(0) >= 0xFF00 && char.charCodeAt(0) <= 0xFFEF;
+}
+function isHalfWidth(char) {
+    return char.charCodeAt(0) >= 0x0020 && char.charCodeAt(0) <= 0x007E;
+}
+
