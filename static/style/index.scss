@@ -3,14 +3,19 @@ $dark-border-color-1: #555555;
 body,
 html {
     overflow: hidden;
-
-    // font-family:
 }
 
 .page {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    // width: 100vw;
+}
+.text_width_calc {
+    [class*="text-"] {
+        width: max-content;
+        // display: inline;
+    }
 }
 
 /* 手机样式 */
@@ -421,14 +426,6 @@ html {
         :first-child {
             background-color: rgba(73, 116, 255, 0.841);
         }
-    }
-}
-.text_width_calc {
-    position: absolute;
-    // bottom: -1px;
-    [class*="text-"] {
-        width: max-content;
-        // display: inline;
     }
 }
 .popup-show {

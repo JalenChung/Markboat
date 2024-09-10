@@ -41,7 +41,7 @@
 		<view class="main">
 			<view class="catalog-container" v-if="windowWidth < 1000 || catalogShow"
 				:class="`${catalogShow ? 'show' : ''}`" :style="`width: ${catalogWidth}px;`">
-				<catalog @headlineSelect="headlineSelect" :data="catalogData"></catalog>
+				<catalog @headlineSelect="headlineSelect" :data="catalogData" :width="catalogWidth"></catalog>
 
 				<view class="controller" @mousedown="dragStart"></view>
 			</view>
@@ -101,7 +101,7 @@
 				<view @click="testFn">
 					<view>test</view>
 				</view>
-				
+
 				<view>_</view>
 				<view>s</view>
 				<view>&nbsp;</view>
@@ -134,11 +134,10 @@
 				<button @click="closePop">取消</button>
 			</view>
 		</view>
-
-		<!-- 字符宽度计算器 -->
-		<view class="text_width_calc">
-			<view :class="'text-' + index" v-for="(item, index) in mdContentArr">{{ item }}</view>
-		</view>
+	</view>
+	<!-- 字符宽度计算器 -->
+	<view class="text_width_calc">
+		<view :class="'text-' + index" v-for="(item, index) in mdContentArr">{{ item }}</view>
 	</view>
 </template>
 
