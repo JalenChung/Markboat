@@ -214,6 +214,16 @@ function catalogController() {
 		overflowCalc()
 	}
 }
+// 给目录数据添加开关属性
+function addSW(data) {
+	data.showChild = true
+	if (data.c.length > 0) {
+		for (let i = 0; i < data.c.length; i++) {
+			data.c[i] = addSW(data.c[i])
+		}
+	}
+	return data
+}
 
 // 最大窗口的事件委托（目前委托方：导航）==================
 // 点击激活navmenu的hover
@@ -382,14 +392,14 @@ function overflowCalc() {
 			// 更新行的溢出记录
 			overflowArr.value[index] = overflow_n > 0 ? overflow_n : 1
 
-			console.log("盒子宽度==>", mdinpWidth);
-			console.log('内容宽度==>', contentWidth);
+			// console.log("盒子宽度==>", mdinpWidth);
+			// console.log('内容宽度==>', contentWidth);
 		})
 	})
 }
 function mdInput() {
 	mdContentArr.value = mdContent.value.split('\n')
-	console.log(mdContentArr.value);
+	// console.log(mdContentArr.value);
 
 	let res = mdParser.value.render(mdContent.value)
 	htmlContent.value = res
@@ -661,15 +671,15 @@ onBeforeMount(() => {
 		listType: 'ul',
 		callback: (html, ast) => {
 
-			// console.log(ast);
-			// console.log(html);
+			let newObj = addSW(ast)
+			// console.log(newObj);
+			
 
 			// 未来所有的目录用这个作为数据
-			catalogData.value = [...ast.c]
+			catalogData.value = newObj
 
-			let htmlString = html
-			catalogContent.value = htmlString
-			return htmlString
+			catalogContent.value = html
+			return html
 		}
 	})
 	let oldId = null, id = null, parentName = '';
