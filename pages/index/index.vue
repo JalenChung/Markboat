@@ -1,143 +1,147 @@
 <template>
-	<view class="page dark" :style="`font-size: ${fontSize}px;`" @click="dropdownOpenFn" @touchStart="dropdownOpenFn">
-		<view class="header">
-			<view class="nav-btns-box" @mouseover="dropdownSelect">
-				<view class="markboat-logo"></view>
-				<dropdown :navText='"文件(F)"' data-id="dropdown-F" :isOpen="dropdownOpen" :nodeName="'F'"
-					:active="activeDropdown == 'F'" @touchend="dropdownTouchend">
-					<dropdown-item>
-						<view>新建</view>
-					</dropdown-item>
-					<dropdown-item>
-						<view @click="popupShow = true">导入</view>
-					</dropdown-item>
-					<dropdown-item>
-						<view>导出</view>
-					</dropdown-item>
-					<dropdown-item>
-						<view>保存</view>
-					</dropdown-item>
-				</dropdown>
-				<dropdown :navText='"文件(T)"' data-id="dropdown-T" :isOpen="dropdownOpen" :nodeName="'T'"
-					:active="activeDropdown == 'T'" @touchend="dropdownTouchend">
-					<dropdown-item>
-						<view>新建</view>
-					</dropdown-item>
-					<dropdown-item>
-						<view>导入</view>
-					</dropdown-item>
-					<dropdown-item>
-						<view>导出</view>
-					</dropdown-item>
-					<dropdown-item>
-						<view>保存</view>
-					</dropdown-item>
-				</dropdown>
+	<view class="container">
+		<view class="page dark" :style="`font-size: ${fontSize}px;`" @click="dropdownOpenFn"
+			@touchStart="dropdownOpenFn">
+			<view class="header">
+				<view class="nav-btns-box" @mouseover="dropdownSelect">
+					<view class="markboat-logo"></view>
+					<dropdown :navText='"文件(F)"' data-id="dropdown-F" :isOpen="dropdownOpen" :nodeName="'F'"
+						:active="activeDropdown == 'F'" @touchend="dropdownTouchend">
+						<dropdown-item>
+							<view>新建</view>
+						</dropdown-item>
+						<dropdown-item>
+							<view @click="popupShow = true">导入</view>
+						</dropdown-item>
+						<dropdown-item>
+							<view>导出</view>
+						</dropdown-item>
+						<dropdown-item>
+							<view>保存</view>
+						</dropdown-item>
+					</dropdown>
+					<dropdown :navText='"文件(T)"' data-id="dropdown-T" :isOpen="dropdownOpen" :nodeName="'T'"
+						:active="activeDropdown == 'T'" @touchend="dropdownTouchend">
+						<dropdown-item>
+							<view>新建</view>
+						</dropdown-item>
+						<dropdown-item>
+							<view>导入</view>
+						</dropdown-item>
+						<dropdown-item>
+							<view>导出</view>
+						</dropdown-item>
+						<dropdown-item>
+							<view>保存</view>
+						</dropdown-item>
+					</dropdown>
+				</view>
+				<view class="nav-path-box">
+					../../文件
+				</view>
 			</view>
-			<view class="nav-path-box">
-				../../文件
-			</view>
-		</view>
-		<view class="main">
-			<view class="catalog-container" v-if="windowWidth < 1000 || catalogShow"
-				:class="`${catalogShow ? 'show' : ''}`" :style="`width: ${catalogWidth}px;`">
-				<catalog @headlineSelect="headlineSelect" :data="catalogData" :width="catalogWidth"></catalog>
+			<view class="main">
+				<view class="catalog-container" v-if="windowWidth < 1000 || catalogShow"
+					:class="`${catalogShow ? 'show' : ''}`" :style="`width: ${catalogWidth}px;`">
+					<catalog @headlineSelect="headlineSelect" :data="catalogData" :width="catalogWidth"></catalog>
 
-				<view class="controller" @mousedown="dragStart"></view>
+					<view class="controller" @mousedown="dragStart"></view>
+				</view>
+				<view class="editor" :style="`width: ${windowWidth < 1000 ? '100%' : editorWidth + 'px'};`">
+					<view class="content" :style="`width: ${windowWidth <= 480 ? '2' : '1'}00%;`"
+						:class="{ 'show-preview': displayMode == '2' }">
+						<!-- 行号盒子  -->
+						<scroll-view class="line-num-box" :scroll-top="mdScrollTop" scroll-y="ture">
+							<!-- :style="`line-height: ${test}px;`" -->
+							<view class="line-num"
+								:style="`line-height: ${lineHeight * overflowArr[0]}px; height: ${lineHeight * overflowArr[0]}px;`"
+								:class="{ 'active': activedLine == 1 }" v-if="!lineNum">1</view>
+							<view class="line-num"
+								:style="`line-height: ${lineHeight * overflowArr[i - 1]}px; height: ${lineHeight * overflowArr[i - 1]}px;`"
+								:class="{ 'active': activedLine == i }" v-for="i in lineNum">{{ i }}
+							</view>
+						</scroll-view>
+						<!-- md -->
+						<textarea :style="`line-height: ${lineHeight}px;`" class="content-md " maxlength="999999999999"
+							@input="mdInput" v-model="mdContent" @tap="activeLine"
+							@mouseover="contentMouseover_l"></textarea>
+
+						<scroll-view class="content-html" v-if="platform == 'h5'" scroll-y="ture"
+							@scroll="contentScroll" :scroll-into-view="previewScrollTarget"
+							:scroll-top="previewBoxScrollTop" ref="previewBox">
+							<div contenteditable="true" @mouseover="contentMouseover_r" v-html="htmlContent"
+								id="htmlContentBox">
+							</div>
+						</scroll-view>
+
+						<towxml class="content-wxml" v-if="platform != 'h5'" :nodes="wxmlContent"
+							:scrollTarget="previewScrollTarget" />
+					</view>
+				</view>
+
 			</view>
-			<view class="editor" :style="`width: ${windowWidth < 1000 ? '100%' : editorWidth + 'px'};`">
-				<view class="content" :style="`width: ${windowWidth <= 480 ? '2' : '1'}00%;`"
-					:class="{ 'show-preview': displayMode == '2' }">
-					<view class="line-num-box" ref="lineNumBox">
-						<!-- :style="`line-height: ${test}px;`" -->
-						<view class="line-num"
-							:style="`line-height: ${lineHeight * overflowArr[0]}px; height: ${lineHeight * overflowArr[0]}px;`"
-							:class="{ 'active': activedLine == 1 }" v-if="!lineNum">1</view>
-						<view class="line-num"
-							:style="`line-height: ${lineHeight * overflowArr[i - 1]}px; height: ${lineHeight * overflowArr[i - 1]}px;`"
-							:class="{ 'active': activedLine == i }" v-for="i in lineNum">{{ i }}
-						</view>
+			<view class="placeholder"></view>
+			<view class="footer">
+				<view class="shortcut">
+					<!-- 目录控制器 -->
+					<view class="catalogController" @click="catalogController">
+						<view v-if="catalogShow" class="list-img-open"></view>
+						<view v-else="catalogShow" class="list-img-close"></view>
+					</view>
+					<!-- 分割线 -->
+					<view class="split"></view>
+					<!-- 快捷键：文字类 -->
+					<view class="shortcut-bold"></view>
+					<view class="shortcut-strikethrough"></view>
+					<view class="shortcut-italic"></view>
+					<view class="shortcut-font"></view>
+					<view class="shortcut-quote"></view>
+					<!-- 分割线 -->
+					<view class="split"></view>
+					<!-- 快捷键：添加一些其他的东西 -->
+					<view class="shortcut-line"></view>
+
+					<view @click="testFn">
+						<view>test</view>
 					</view>
 
-					<textarea :style="`line-height: ${lineHeight}px;`" class="content-md " maxlength="999999999999"
-						@input="mdInput" v-model="mdContent" @tap="activeLine"
-						@mouseover="contentMouseover_l"></textarea>
+					<view>_</view>
+					<view>s</view>
+					<view>&nbsp;</view>
+					<view>M</view>
+					<view>中</view>
 
-					<scroll-view class="content-html" v-if="platform == 'h5'" scroll-y="ture"
-						:scroll-into-view="contentScrolltarget" :scroll-top="previewBoxScrollTop"
-						@scroll="contentScroll" ref="previewBox">
-						<div contenteditable="true" @mouseover="contentMouseover_r" v-html="htmlContent"
-							id="htmlContentBox">
-						</div>
-					</scroll-view>
-
-					<towxml class="content-wxml" v-if="platform != 'h5'" :nodes="wxmlContent"
-						:scrollTarget="contentScrolltarget" />
+					<view class="switcher" v-if="showSwitcher" @click="displayMode = displayMode == '1' ? '2' : '1'"
+						:class="displayMode == '1' ? 'show-md' : 'show-html'">
+						<view class="md-img"></view>
+						<view class="html-img"></view>
+					</view>
 				</view>
 			</view>
-
-		</view>
-		<view class="placeholder"></view>
-		<view class="footer">
-			<view class="shortcut">
-				<!-- 目录控制器 -->
-				<view class="catalogController" @click="catalogController">
-					<view v-if="catalogShow" class="list-img-open"></view>
-					<view v-else="catalogShow" class="list-img-close"></view>
+			<!-- 导入弹窗 -->
+			<view class="import-popup" :class="popupShow ? 'popup-show' : ''">
+				<view class="popup-header">
+					<view style="font-size:medium;">导入</view>
+					<view class="finger" style="font-size:larger;" @click="closePop">×</view>
 				</view>
-				<!-- 分割线 -->
-				<view class="split"></view>
-				<!-- 快捷键：文字类 -->
-				<view class="shortcut-bold"></view>
-				<view class="shortcut-strikethrough"></view>
-				<view class="shortcut-italic"></view>
-				<view class="shortcut-font"></view>
-				<view class="shortcut-quote"></view>
-				<!-- 分割线 -->
-				<view class="split"></view>
-				<!-- 快捷键：添加一些其他的东西 -->
-				<view class="shortcut-line"></view>
-
-				<view @click="testFn">
-					<view>test</view>
+				<!-- H5 -->
+				<view class="fileChange">
+					<FileDropZone @drop="ondrop" @click="chooseFile" :mode="platform">
+						<view style="font-size: 30px;">+</view>
+						<view>点击选择文件 or 拖动文件到此处</view>
+					</FileDropZone>
 				</view>
 
-				<view>_</view>
-				<view>s</view>
-				<view>&nbsp;</view>
-				<view>M</view>
-				<view>中</view>
-
-				<view class="switcher" v-if="showSwitcher" @click="displayMode = displayMode == '1' ? '2' : '1'"
-					:class="displayMode == '1' ? 'show-md' : 'show-html'">
-					<view class="md-img"></view>
-					<view class="html-img"></view>
+				<view class="btn-box clearfix">
+					<button @click="confirm">确定</button>
+					<button @click="closePop">取消</button>
 				</view>
 			</view>
 		</view>
-		<!-- 导入弹窗 -->
-		<view class="import-popup" :class="popupShow ? 'popup-show' : ''">
-			<view class="popup-header">
-				<view style="font-size:medium;">导入</view>
-				<view class="finger" style="font-size:larger;" @click="closePop">×</view>
-			</view>
-			<!-- H5 -->
-			<view class="fileChange">
-				<FileDropZone @drop="ondrop" @click="chooseFile" :mode="platform">
-					<view style="font-size: 30px;">+</view>
-					<view>点击选择文件 or 拖动文件到此处</view>
-				</FileDropZone>
-			</view>
-
-			<view class="btn-box clearfix">
-				<button @click="confirm">确定</button>
-				<button @click="closePop">取消</button>
-			</view>
+		<!-- 字符宽度计算器 -->
+		<view class="text_width_calc">
+			<view :class="'text-' + index" v-for="(item, index) in mdContentArr">{{ item }}</view>
 		</view>
-	</view>
-	<!-- 字符宽度计算器 -->
-	<view class="text_width_calc">
-		<view :class="'text-' + index" v-for="(item, index) in mdContentArr">{{ item }}</view>
 	</view>
 </template>
 
@@ -155,6 +159,7 @@ import TestView from '../../components/TestView/index.vue'
 
 import Token from '../../static/js/mdToken.js'
 import throttle from '../../static/js/throttle.js'
+import debounce from '../../static/js/debounce.js'
 
 import { ref, watch, computed, onBeforeMount, onMounted, onBeforeUpdate, onUpdated } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
@@ -363,7 +368,7 @@ async function textWidthCalc() {
 				query = uni.createSelectorQuery()
 			}
 			query.select('.text-' + i).boundingClientRect(data => {
-				console.log(i);
+				// console.log(i);
 				res(data ? data.width : 0)
 				// return data.width
 			}).exec();
@@ -399,32 +404,22 @@ function overflowCalc() {
 }
 function mdInput() {
 	mdContentArr.value = mdContent.value.split('\n')
-	// console.log(mdContentArr.value);
-
-	let res = mdParser.value.render(mdContent.value)
-	htmlContent.value = res
+	let res = htmlContent.value = mdParser.value.render(mdContent.value)
 	domIdArr = extractIds(res)
+	overflowCalc()
 
 	if ((platform.value != 'h5')) {
 		wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
 	}
-
-	overflowCalc()
 }
+let _overflowCalc = debounce(overflowCalc, 500) // 防抖版的行号处理
 // 当md内容发生改变，则调整行提示
 watch(mdContent, (newVal, oldVal) => {
+	_overflowCalc()
 	if (!oldVal) {
-		return
+		mdIncrement = 0
 	}
-	// let lastChart = null // 删除拿删除值，新增拿新增值
-	if (newVal.length > oldVal.length) {
-		// lastChart = newVal[newVal.length - 1]
-		mdIncrement = 1
-	}
-	if (oldVal.length > newVal.length) {
-		// lastChart = oldVal[oldVal.length - 1]
-		mdIncrement = -1
-	}
+	mdIncrement = newVal.length > oldVal.length ? 1 : -1
 });
 // 当观察到变化时执行的回调函数  
 function htmlInput(mutationsList, observer) {
@@ -433,9 +428,9 @@ function htmlInput(mutationsList, observer) {
 };
 
 // 非输入事件 ==================================================
-let lineNumBox = ref(null) // 行号盒子
 let previewBox = ref(null) // 右边预览总体
-let previewBoxScrollTop = ref()
+let previewBoxScrollTop = ref() // 顶部距离（预览内容）
+let mdScrollTop = ref(0) // 顶部距离（md内容）
 let scrollTarget = 0 // 左1 右2
 function contentMouseover_l() {
 	scrollTarget = 1
@@ -443,10 +438,12 @@ function contentMouseover_l() {
 function contentMouseover_r() {
 	scrollTarget = 2
 }
+// web端内容滚动
 function contentScroll(e) {
 	if (e.target.className == 'uni-textarea-textarea' && scrollTarget == 1) {
 		let containerHeight = e.target.clientHeight
 		// 右边的滚动比例
+		mdScrollTop.value = e.target.scrollTop
 		let numerator = Math.ceil(e.target.scrollTop)
 		let denominator = e.target.previousElementSibling.clientHeight - containerHeight
 		let proportion = numerator / denominator
@@ -469,6 +466,10 @@ function contentScroll(e) {
 	}
 
 }
+// 滚动托管
+function editorScroll(e) {
+
+}
 // 点击md内容，激活行高亮
 function activeLine(e) {
 	if (mdContent.value) {
@@ -476,7 +477,7 @@ function activeLine(e) {
 
 		let top_h = windowWidth <= 480 ? 40 : 30
 		// lineNum_click: 鼠标点击的行
-		let lineNum_click = Math.ceil((e.changedTouches[0].pageY - top_h) / lineHeight.value)
+		let lineNum_click = Math.ceil((e.changedTouches[0].pageY + mdScrollTop.value - top_h) / lineHeight.value)
 		// lineNum_corrected: 【高亮目标】纠正后得出，不考虑溢出情况下的真实应高亮的行
 		let viewHeight = overflowArr.value.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
 		let lineNum_corrected = lineNum_click > viewHeight ? viewHeight : lineNum_click
@@ -494,12 +495,13 @@ function activeLine(e) {
 		console.log(lineNum_click, overflowArr.value);
 	}
 }
-// 滑动目标
-let contentScrolltarget = ref('');
+// 滑动目标（预览内容）
+let previewScrollTarget = ref('');
+
 // 点击导航触发滑动事件
 function headlineSelect(e) {
 	// console.log(e);
-	contentScrolltarget.value = e
+	previewScrollTarget.value = e
 
 	const query = uni.createSelectorQuery(); // 不需要传入上下文
 	// console.log(query);
@@ -670,14 +672,10 @@ onBeforeMount(() => {
 	}).use(toc, {
 		listType: 'ul',
 		callback: (html, ast) => {
-
 			let newObj = addSW(ast)
 			// console.log(newObj);
-			
-
 			// 未来所有的目录用这个作为数据
 			catalogData.value = newObj
-
 			catalogContent.value = html
 			return html
 		}
@@ -702,18 +700,14 @@ onBeforeMount(() => {
 				token.attrPush(['id', id]);
 				oldId = id
 			}
-
 			// 过滤出开头
 			if (token.nesting == 1) {
 				token.attrPush(['style', 'position: relative;'])
 				parentName = token.tag
 			}
-
 			// 中间部分
 			// if (token.nesting == 0 && token.children[0]?.content != undefined) {
-
 			// 	let inputToken = new Token("heading_open", "input", 1)
-
 			// 	token.children.push(inputToken)
 			// }
 		});
@@ -733,8 +727,6 @@ onBeforeMount(() => {
 			return ''
 		}
 	});
-
-
 })
 
 onMounted(() => {
@@ -749,7 +741,7 @@ onMounted(() => {
 		// 开始观察目标节点  
 		observer.observe(targetNode, config);
 		// 之后，你可以停止观察  
-		// observer.disconnect();
+		observer.disconnect();
 		let mdinpBox = document.querySelector('.content-md')
 		mdinpBox.addEventListener('wheel', contentScroll)
 		mdinpBox.querySelector('.uni-textarea-textarea').addEventListener('scroll', contentScroll)
