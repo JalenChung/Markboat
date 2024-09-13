@@ -181,29 +181,10 @@ $dark-border-color-1: #555555;
             flex-direction: row;
             [class*="content-"] {
                 height: 100%;
-                padding-left: 10px;
             }
-            .line-num-box {
-                display: flex;
-                flex-direction: column;
-                width: 40px;
-                height: 100%;
-                ::-webkit-scrollbar {
-                    width: 0px;
-                }
-
-                .line-num {
-                    width: 100%;
-                    text-align: right;
-                    opacity: 0.6;
-                }
-                .active {
-                    opacity: 1;
-                    font-weight: bolder;
-                }
-            }
+            
             .content-md {
-                width: calc(100% / 2 - 10px - 40px);
+                width: calc(100% / 2);
                 /* 滚动条整体样式 */
                 ::-webkit-scrollbar {
                     width: 5px; /* 滚动条宽度 */
@@ -219,9 +200,40 @@ $dark-border-color-1: #555555;
                     background-color: none; /* 轨道颜色 */
                     border-radius: 10px; /* 轨道圆角 */
                 }
+                .line-num-box {
+                    display: flex;
+                    flex-direction: column;
+                    width: 40px;
+                    height: 100%;
+                    float: left;
+                    ::-webkit-scrollbar {
+                        width: 0px;
+                    }
+    
+                    .line-num {
+                        width: 100%;
+                        text-align: right;
+                        opacity: 0.6;
+                    }
+                    .active {
+                        opacity: 1;
+                        font-weight: bolder;
+                    }
+                }
+                .md-inp-box {
+                    height: 100%;
+                    width: calc(100% - 40px - 10px);
+                    padding-left: 10px;
+                    float: left;
+                    :first-child {
+                        height: 100%;
+                        overflow-y: none;
+                    }
+                }
             }
             .content-html {
                 width: calc(100% / 2 - 10px);
+                padding-left: 10px;
                 /* 滚动条整体样式 */
                 ::-webkit-scrollbar {
                     width: 7px; /* 滚动条宽度 */

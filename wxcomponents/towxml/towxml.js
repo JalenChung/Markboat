@@ -1,19 +1,19 @@
 Component({
-  options:{
-    styleIsolation:'shared'
+  options: {
+    styleIsolation: 'shared'
   },
-  properties:{
-    nodes:{
-      type:Object,
-      value:{}
+  properties: {
+    nodes: {
+      type: Object,
+      value: {}
     },
-    scrollTarget:{
-      type:String
+    scrollTarget: {
+      type: String
     }
   },
-  data:{
-    someData:{
-      
+  data: {
+    someData: {
+
     }
   }
 })

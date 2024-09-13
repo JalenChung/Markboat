@@ -50,32 +50,37 @@
 				<view class="editor" :style="`width: ${windowWidth < 1000 ? '100%' : editorWidth + 'px'};`">
 					<view class="content" :style="`width: ${windowWidth <= 480 ? '2' : '1'}00%;`"
 						:class="{ 'show-preview': displayMode == '2' }">
-						<!-- 行号盒子  -->
-						<scroll-view class="line-num-box" :scroll-top="mdScrollTop" scroll-y="ture">
-							<!-- :style="`line-height: ${test}px;`" -->
-							<view class="line-num"
-								:style="`line-height: ${lineHeight * overflowArr[0]}px; height: ${lineHeight * overflowArr[0]}px;`"
-								:class="{ 'active': activedLine == 1 }" v-if="!lineNum">1</view>
-							<view class="line-num"
-								:style="`line-height: ${lineHeight * overflowArr[i - 1]}px; height: ${lineHeight * overflowArr[i - 1]}px;`"
-								:class="{ 'active': activedLine == i }" v-for="i in lineNum">{{ i }}
-							</view>
-						</scroll-view>
 						<!-- md -->
-						<textarea :style="`line-height: ${lineHeight}px;`" class="content-md " maxlength="999999999999"
-							@input="mdInput" v-model="mdContent" @tap="activeLine"
-							@mouseover="contentMouseover_l"></textarea>
+						<scroll-view class="content-md" @scroll="mdContentScroll" :scroll-top="mdContentScrollTop"
+							scroll-y="ture">
+							<!-- 行号盒子  -->
+							<view class="line-num-box">
+								<!-- :style="`line-height: ${test}px;`" -->
+								<view class="line-num"
+									:style="`line-height: ${lineHeight * overflowArr[0]}px; height: ${lineHeight * overflowArr[0]}px;`"
+									:class="{ 'active': activedLine == 1 }" v-if="!lineNum">1</view>
+								<view class="line-num"
+									:style="`line-height: ${lineHeight * overflowArr[i - 1]}px; height: ${lineHeight * overflowArr[i - 1]}px;`"
+									:class="{ 'active': activedLine == i }" v-for="i in lineNum">{{ i }}
+								</view>
+							</view>
+							<!-- md内容 -->
+							<textarea
+								:style="`line-height: ${lineHeight}px; height: ${mdinpHeight > windowHeight - hf_height * 2 ? mdinpHeight : windowHeight - hf_height * 2}px;`"
+								class="md-inp-box" maxlength="999999999999" @input="mdInput" v-model="mdContent"
+								@tap="activeLine" @mouseover="contentMouseover_l"></textarea>
+						</scroll-view>
 
-						<scroll-view class="content-html" v-if="platform == 'h5'" scroll-y="ture"
-							@scroll="contentScroll" :scroll-into-view="previewScrollTarget"
-							:scroll-top="previewBoxScrollTop" ref="previewBox">
+						<scroll-view class="content-html" @scroll="htmlContentScroll" v-if="platform == 'h5'"
+							scroll-y="ture" :scroll-into-view="previewScrollTarget" :scroll-top="htmlContentScrollTop"
+							ref="previewBox">
 							<div contenteditable="true" @mouseover="contentMouseover_r" v-html="htmlContent"
 								id="htmlContentBox">
 							</div>
 						</scroll-view>
 
 						<towxml class="content-wxml" v-if="platform != 'h5'" :nodes="wxmlContent"
-							:scrollTarget="previewScrollTarget" />
+							:scrollTarget="previewScrollTarget" :scrollTop="wxmlContentScrollTop" />
 					</view>
 				</view>
 
@@ -159,16 +164,18 @@ import TestView from '../../components/TestView/index.vue'
 
 import Token from '../../static/js/mdToken.js'
 import throttle from '../../static/js/throttle.js'
-import debounce from '../../static/js/debounce.js'
+import debounce from '@/static/js/debounce.js'
 
 import { ref, watch, computed, onBeforeMount, onMounted, onBeforeUpdate, onUpdated } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 
 let windowWidth = ref(0)
+let windowHeight = ref(0)
 let fontSize = ref(16)
 let lineHeight = ref(21)
 let overflowArr = ref([1])
 let spaceWidth = 4.74
+let hf_height = ref(40) // 头部与脚步功能区的高度
 
 let towxml = null
 
@@ -295,6 +302,7 @@ let htmlParser = ref(null)
 // md字符串。内容
 let mdContent = ref(null)
 let mdContentArr = ref([])
+let mdinpHeight = ref(0)
 let catalogContent = ref(null)
 let catalogData = ref(null) // 目录的数据
 let htmlInputBox = ref(null)
@@ -379,6 +387,7 @@ async function textWidthCalc() {
 // 计算给定行的md溢出情况，并记录在溢出数组内
 function overflowCalc() {
 	textWidthCalc().then(res => {
+		mdinpHeight.value = 0
 		res.forEach((contentWidth, index) => {
 			// let catalogW = windowWidth.value >= 1000 ? catalogWidth.value : 0
 			// 输入框的宽度
@@ -396,6 +405,8 @@ function overflowCalc() {
 			let overflow_n = Math.ceil((contentWidth + mdIncrement * fontSize.value) / mdinpWidth)
 			// 更新行的溢出记录
 			overflowArr.value[index] = overflow_n > 0 ? overflow_n : 1
+			// 更新md输入框高度
+			mdinpHeight.value = mdinpHeight.value + overflowArr.value[index] * lineHeight.value
 
 			// console.log("盒子宽度==>", mdinpWidth);
 			// console.log('内容宽度==>', contentWidth);
@@ -429,8 +440,6 @@ function htmlInput(mutationsList, observer) {
 
 // 非输入事件 ==================================================
 let previewBox = ref(null) // 右边预览总体
-let previewBoxScrollTop = ref() // 顶部距离（预览内容）
-let mdScrollTop = ref(0) // 顶部距离（md内容）
 let scrollTarget = 0 // 左1 右2
 function contentMouseover_l() {
 	scrollTarget = 1
@@ -438,46 +447,37 @@ function contentMouseover_l() {
 function contentMouseover_r() {
 	scrollTarget = 2
 }
-// web端内容滚动
-function contentScroll(e) {
-	if (e.target.className == 'uni-textarea-textarea' && scrollTarget == 1) {
-		let containerHeight = e.target.clientHeight
-		// 右边的滚动比例
-		mdScrollTop.value = e.target.scrollTop
-		let numerator = Math.ceil(e.target.scrollTop)
-		let denominator = e.target.previousElementSibling.clientHeight - containerHeight
-		let proportion = numerator / denominator
-		// 左边
-		let previewBoxHeight = document.querySelector('#htmlContentBox').clientHeight
-		previewBoxScrollTop.value = previewBoxHeight * proportion
-	} else if (scrollTarget == 2) {
-		let containerHeight = document.querySelector('#htmlContentBox').parentNode.clientHeight
-		// 右边 
-		try {
-			let numerator = e.detail.scrollTop
-			let denominator = e.detail.scrollHeight
-			let proportion = Math.ceil(numerator) / (denominator - containerHeight)
-			// 右边
-			let mdContentBox = document.querySelector('.uni-textarea-textarea')
-			mdContentBox.scrollTop = mdContentBox.scrollHeight * proportion
-		} catch (error) {
-
+let mdContentScrollTop = ref(0)
+let htmlContentScrollTop = ref(0)
+let wxmlContentScrollTop = ref(0)
+function mdContentScroll(e) {
+	if (scrollTarget == 1) {
+		mdContentScrollTop.value = e.detail.scrollTop // 给行号盒子用的
+		let editorHeight = windowHeight.value - lineHeight.value * 2
+		// 右边的滚动比例 	
+		let proportion = e.detail.scrollTop / (e.detail.scrollHeight - editorHeight)
+		// 当在web平台时会触发左边的滚动
+		if (platform.value == 'h5') {
+			let htmlHeight = document.querySelector('#htmlContentBox').clientHeight
+			htmlContentScrollTop.value = wxmlContentScrollTop.value = (htmlHeight - editorHeight) * proportion
 		}
 	}
-
 }
-// 滚动托管
-function editorScroll(e) {
-
+function htmlContentScroll(e) {
+	if (scrollTarget == 2) {
+		let editorHeight = windowHeight.value - lineHeight.value * 2
+		// 左边边的滚动比例
+		let proportion = e.detail.scrollTop / (e.detail.scrollHeight - editorHeight)
+		// console.log(proportion);
+		mdContentScrollTop.value = (mdinpHeight.value - editorHeight) * proportion
+	}
 }
 // 点击md内容，激活行高亮
 function activeLine(e) {
 	if (mdContent.value) {
 		let lineNum = mdContent.value.split('\n').length
-
-		let top_h = windowWidth <= 480 ? 40 : 30
 		// lineNum_click: 鼠标点击的行
-		let lineNum_click = Math.ceil((e.changedTouches[0].pageY + mdScrollTop.value - top_h) / lineHeight.value)
+		let lineNum_click = Math.ceil((e.changedTouches[0].pageY - hf_height.value + mdContentScrollTop.value) / lineHeight.value)
 		// lineNum_corrected: 【高亮目标】纠正后得出，不考虑溢出情况下的真实应高亮的行
 		let viewHeight = overflowArr.value.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
 		let lineNum_corrected = lineNum_click > viewHeight ? viewHeight : lineNum_click
@@ -492,23 +492,16 @@ function activeLine(e) {
 				break;
 			}
 		}
-		console.log(lineNum_click, overflowArr.value);
+		// console.log(lineNum_click, overflowArr.value);
 	}
 }
 // 滑动目标（预览内容）
 let previewScrollTarget = ref('');
-
 // 点击导航触发滑动事件
 function headlineSelect(e) {
-	// console.log(e);
 	previewScrollTarget.value = e
-
-	const query = uni.createSelectorQuery(); // 不需要传入上下文
-	// console.log(query);
-
+	const query = uni.createSelectorQuery();
 	query.select(`#${e}`).boundingClientRect((data) => {
-		// console.log(data);
-
 		if (data) {
 			const elementBTop = data.top; // 元素B在屏幕中的顶部位置
 			// console.log('元素B的高度：', elementBTop);
@@ -522,7 +515,6 @@ function headlineSelect(e) {
 
 // 导入=======================================================
 let popupShow = ref(false)
-
 // 按钮触发选择  
 function chooseFile() {
 	uni.chooseFile({
@@ -637,6 +629,8 @@ onBeforeMount(() => {
 	uni.getSystemInfo({
 		success: (res) => {
 			windowWidth.value = res.windowWidth// 可使用窗口宽度，单位px  
+			hf_height.value = res.windowWidth > 480 ? 30 : 40
+			windowHeight.value = res.windowHeight
 			// if (windowWidth.value <= 480) {
 			// 	fontSize.value = 14
 			// 	lineHeight.value = 19
@@ -742,9 +736,9 @@ onMounted(() => {
 		observer.observe(targetNode, config);
 		// 之后，你可以停止观察  
 		observer.disconnect();
-		let mdinpBox = document.querySelector('.content-md')
-		mdinpBox.addEventListener('wheel', contentScroll)
-		mdinpBox.querySelector('.uni-textarea-textarea').addEventListener('scroll', contentScroll)
+		// let mdinpBox = document.querySelector('.content-md')
+		// mdinpBox.addEventListener('wheel', contentScroll)
+		// mdinpBox.querySelector('.uni-textarea-textarea').addEventListener('scroll', contentScroll)
 	}
 
 })
