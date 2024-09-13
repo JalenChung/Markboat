@@ -503,12 +503,8 @@ function headlineSelect(e) {
 	const query = uni.createSelectorQuery();
 	query.select(`#${e}`).boundingClientRect((data) => {
 		if (data) {
-			const elementBTop = data.top; // 元素B在屏幕中的顶部位置
-			// console.log('元素B的高度：', elementBTop);
-			uni.showToast({
-				title: `元素B的高度: ${elementBTop}px`,
-				icon: 'none'
-			});
+			const elementBTop = data.top - lineHeight.value; // 元素B在屏幕中的顶部位置
+			mdContentScrollTop.value = elementBTop
 		}
 	}).exec();
 }

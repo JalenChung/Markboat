@@ -11,6 +11,9 @@
         background-image: url(../../static/images/chevron-down-light.png);
         background-size: 100% 100%;
     }
+    .arrow-r{
+        transform: rotate(-90deg);
+    }
 
     .node-ds {
         width: 6px;
