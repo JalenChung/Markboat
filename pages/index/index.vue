@@ -80,7 +80,8 @@
 						</scroll-view>
 
 						<towxml class="content-wxml" v-if="platform != 'h5'" :nodes="wxmlContent"
-							:scrollTarget="previewScrollTarget" :scrollTop="wxmlContentScrollTop" />
+							:scrollTarget="previewScrollTarget" :scrollTop="wxmlContentScrollTop"
+							@towxmlScroll="wxmlContentScroll" />
 					</view>
 				</view>
 
@@ -116,7 +117,7 @@
 					<view>M</view>
 					<view>中</view>
 
-					<view class="switcher" v-if="showSwitcher" @click="displayMode = displayMode == '1' ? '2' : '1'"
+					<view class="switcher" v-if="showSwitcher" @click="switcherFn"
 						:class="displayMode == '1' ? 'show-md' : 'show-html'">
 						<view class="md-img"></view>
 						<view class="html-img"></view>
@@ -292,7 +293,7 @@ let dropdownTouchend = e => {
 	activeDropdown.value = e.currentTarget.dataset.id.split('-')[1]
 }
 
-// 小屏：显示模式，1.html or 2.md
+// 小屏：显示模式，1.md or 2.pre
 let displayMode = ref(1)
 
 
@@ -303,7 +304,6 @@ let htmlParser = ref(null)
 let mdContent = ref(null)
 let mdContentArr = ref([])
 let mdinpHeight = ref(0)
-let catalogContent = ref(null)
 let catalogData = ref(null) // 目录的数据
 let htmlInputBox = ref(null)
 let htmlContent = ref(null)
@@ -325,11 +325,9 @@ function extractIds(htmlString) {
 	const idPattern = /id=["']([^"']+)["']/g;
 	let ids = [];
 	let match;
-
 	while ((match = idPattern.exec(htmlString)) !== null) {
 		ids.push(match[1]);
 	}
-
 	return ids;
 }
 function findElementById(htmlString, targetId) {
@@ -407,7 +405,6 @@ function overflowCalc() {
 			overflowArr.value[index] = overflow_n > 0 ? overflow_n : 1
 			// 更新md输入框高度
 			mdinpHeight.value = mdinpHeight.value + overflowArr.value[index] * lineHeight.value
-
 			// console.log("盒子宽度==>", mdinpWidth);
 			// console.log('内容宽度==>', contentWidth);
 		})
@@ -423,7 +420,7 @@ function mdInput() {
 		wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
 	}
 }
-let _overflowCalc = debounce(overflowCalc, 500) // 防抖版的行号处理
+let _overflowCalc = debounce(overflowCalc, 100) // 防抖版的行号处理
 // 当md内容发生改变，则调整行提示
 watch(mdContent, (newVal, oldVal) => {
 	_overflowCalc()
@@ -451,7 +448,7 @@ let mdContentScrollTop = ref(0)
 let htmlContentScrollTop = ref(0)
 let wxmlContentScrollTop = ref(0)
 function mdContentScroll(e) {
-	if (scrollTarget == 1) {
+	if (scrollTarget == 1 || platform != 'h5') {
 		mdContentScrollTop.value = e.detail.scrollTop // 给行号盒子用的
 		let editorHeight = windowHeight.value - lineHeight.value * 2
 		// 右边的滚动比例 	
@@ -459,7 +456,7 @@ function mdContentScroll(e) {
 		// 当在web平台时会触发左边的滚动
 		if (platform.value == 'h5') {
 			let htmlHeight = document.querySelector('#htmlContentBox').clientHeight
-			htmlContentScrollTop.value = wxmlContentScrollTop.value = (htmlHeight - editorHeight) * proportion
+			htmlContentScrollTop.value = (htmlHeight - editorHeight) * proportion
 		}
 	}
 }
@@ -471,6 +468,14 @@ function htmlContentScroll(e) {
 		// console.log(proportion);
 		mdContentScrollTop.value = (mdinpHeight.value - editorHeight) * proportion
 	}
+}
+function wxmlContentScroll(e) {
+	console.log('wxmlContentScroll=>',e);
+	let editorHeight = windowHeight.value - lineHeight.value * 2
+	// 左边边的滚动比例
+	let proportion = e.detail.scrollTop / (e.detail.scrollHeight - editorHeight)
+	// console.log(proportion);
+	mdContentScrollTop.value = (mdinpHeight.value - editorHeight) * proportion
 }
 // 点击md内容，激活行高亮
 function activeLine(e) {
@@ -492,7 +497,6 @@ function activeLine(e) {
 				break;
 			}
 		}
-		// console.log(lineNum_click, overflowArr.value);
 	}
 }
 // 滑动目标（预览内容）
@@ -581,14 +585,10 @@ function confirm() {
 
 // 底部========================================================
 let showSwitcher = ref(false)
-
-
 function createDomId(tagName) {
 	let id = ''
 	// 从集体id数组中过滤出，该类型的数组
-
 	let idArr = domIdArr.filter(e => e.includes(tagName))
-
 	// 找到未被占用的id tag-n + 1
 	for (let i = 0; i < idArr.length + 1; i++) {
 		let n = i + 1
@@ -599,17 +599,31 @@ function createDomId(tagName) {
 		}
 	}
 }
+let overf_i = 0
+let overf_n = 0
+function switcherFn() {
+	displayMode.value = displayMode.value == '1' ? '2' : '1'
+	if (displayMode.value == '2') {
+		let mdTop = mdContentScrollTop.value / lineHeight.value
+		for (overf_i = 0; overf_i < overflowArr.value.length; overf_i++) {
+			overf_n += overflowArr.value[overf_i]
+			// 当溢出量大于【高亮目标】，则选中该行
+			if (overf_n >= mdTop) {
+				break;
+			}
+		}
+		previewScrollTarget.value = domIdArr[overf_i]
+	}
+	if (displayMode.value == '1') {
+		const query = uni.createSelectorQuery();
+		query.select(`#wx-content-box`).boundingClientRect((data) => {
+			console.log(data);
+		}).exec();
+	}
+	overf_i = overf_n = 0
+}
 
 // 生命钩子 ====================================================
-// onLoad(() => {
-// 	let query = uni.createSelectorQuery().in(this);
-// 	//需要给黄色区域设置一个id标识，在这里是demo
-// 	query.select('#demo').boundingClientRect(data => {
-// 		console.log(data.top)//这个就是距离顶部的高度
-// 		this.listTop = data.top//赋值，待会要用
-// 	}).exec();
-// })
-
 onBeforeMount(() => {
 	// 获取平台信息 =====================================
 	platform.value = process.env.UNI_PLATFORM
@@ -638,7 +652,7 @@ onBeforeMount(() => {
 			// }
 			// if (windowWidth.value >= 1000) {
 			fontSize.value = 16
-			lineHeight.value = 21
+			lineHeight.value = 20.8
 			spaceWidth = 4.74
 			// }
 		}
@@ -663,10 +677,7 @@ onBeforeMount(() => {
 		listType: 'ul',
 		callback: (html, ast) => {
 			let newObj = addSW(ast)
-			// console.log(newObj);
-			// 未来所有的目录用这个作为数据
 			catalogData.value = newObj
-			catalogContent.value = html
 			return html
 		}
 	})
@@ -718,7 +729,6 @@ onBeforeMount(() => {
 		}
 	});
 })
-
 onMounted(() => {
 	// 设备判断 - 初始化 - 绑定方法
 	if (platform.value == 'h5') {
@@ -738,32 +748,10 @@ onMounted(() => {
 	}
 
 })
-
-
 function testFn(e) {
 	// console.log("test");
 	// console.log(catalogData.value);
-	// console.log(catalogContent.value);
-
-
 }
-
-
-
-
-// export default {
-// 	data() {
-// 		return {
-// 			title: 'Hello'
-// 		}
-// 	},
-// 	onLoad() {
-
-// 	},
-// 	methods: {
-
-// 	}
-// }
 </script>
 
 <style>

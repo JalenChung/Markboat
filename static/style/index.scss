@@ -259,6 +259,7 @@ $dark-border-color-1: #555555;
             }
             .content-wxml {
                 width: calc(100% / 2 - 10px);
+                padding-left: 10px;
             }
         }
         .show-preview {

@@ -15,6 +15,9 @@ Component({
 		slideable: {
 			type: Boolean,
 			default: false
+		},
+		scrollTop: {
+			type: Number
 		}
 	},
 	lifetimes: {
@@ -29,6 +32,11 @@ Component({
 				};
 			});
 
+		}
+	},
+	methods: {
+		handleScroll: function (e) {
+			this.triggerEvent('decodeScroll', e.detail);
 		}
 	}
 })

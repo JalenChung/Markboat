@@ -13,8 +13,7 @@
         position: absolute;
         top: 20px;
         left: 0px;
-        border: 1px solid #555555;
-        background-color: #181818;
+        background-color: rgba(40,40,40);
         padding: 10px;
         border-radius: 6px;
         display: none;
@@ -22,12 +21,15 @@
     }
 }
 .dropdown:hover {
-    background-color: rgba(65, 65, 65, 0.841);
+    background-color: rgba(50, 50, 50);
 }
 .active {
-    background-color: rgba(65, 65, 65, 0.841);
+    background-color: rgb(40,40,40);
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
 
     .dropdown-menu {
         display: block;
+        border-top-left-radius: 0px;
     }
 }

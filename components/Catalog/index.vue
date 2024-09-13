@@ -67,6 +67,7 @@ let props = defineProps({
 });
 const emit = defineEmits(['headlineSelect']);
 function tapFn(e) {
+    console.log(e);
     emit('headlineSelect', 'h-' + e.target.dataset.id)
 }
 let idArr = []
@@ -80,12 +81,10 @@ function getid(str) {
         idArr.push(str)
         res = str
     }
-    // console.log(res);
     return res
 }
 let idList = [] //当前点击标题对应的id 所分割成的数组
 function packUp(e) {
-    console.log(props.data);
     idList = e.currentTarget.dataset.id.split('-')
     let child = findSWAndCtrl(props.data.c, 0)
 }

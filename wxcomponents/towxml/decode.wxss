@@ -1,3 +1,6 @@
 .scroll-box{
     height: calc(100vh - 40px * 2);
 }
+.wx-content-box{
+    height: max-content;
+}
