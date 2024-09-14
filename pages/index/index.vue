@@ -414,7 +414,7 @@ function mdInput() {
 	mdContentArr.value = mdContent.value.split('\n')
 	let res = htmlContent.value = mdParser.value.render(mdContent.value)
 	domIdArr = extractIds(res)
-	overflowCalc()
+	// overflowCalc()
 
 	if ((platform.value != 'h5')) {
 		wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
@@ -470,7 +470,7 @@ function htmlContentScroll(e) {
 	}
 }
 function wxmlContentScroll(e) {
-	console.log('wxmlContentScroll=>',e);
+	console.log('wxmlContentScroll=>', e);
 	let editorHeight = windowHeight.value - lineHeight.value * 2
 	// 左边边的滚动比例
 	let proportion = e.detail.scrollTop / (e.detail.scrollHeight - editorHeight)
@@ -581,6 +581,40 @@ function confirm() {
 	slashShow.value = 'display: block;'
 	catalogShow.value = false
 	closePop()
+}
+
+// 快捷键相关===================================================
+function webTextSelect() {
+	// 当鼠标释放时，获取选中的文本  
+	let selectedText = window.getSelection().toString();
+	if (selectedText) {
+		console.log('选中的文本是：', selectedText);
+	} else {
+		console.log('没有选中任何文本。');
+	}
+}
+function shortcut(event) {
+	// 检查是否按下了 Ctrl+R  
+	if (event.ctrlKey && event.key === 'r') {
+		// 阻止默认行为（如果有的话）  
+		event.preventDefault();
+		// 获取选中的文本  
+		const selectedText = window.getSelection().toString();
+		// 替换选中的文本
+		if (selectedText) {
+			const range = window.getSelection().getRangeAt(0);
+			console.log(range);
+
+			range.deleteContents(); // 删除选中的文本  
+			const replacementNode = document.createTextNode('xxxx');
+			range.insertNode(replacementNode);
+			// 可选：将光标移动到替换后的文本末尾===============
+			range.setStartAfter(replacementNode);
+			range.setEndAfter(replacementNode);
+			window.getSelection().removeAllRanges();
+			window.getSelection().addRange(range);
+		}
+	}
 }
 
 // 底部========================================================
@@ -741,10 +775,11 @@ onMounted(() => {
 		// 开始观察目标节点  
 		observer.observe(targetNode, config);
 		// 之后，你可以停止观察  
-		observer.disconnect();
-		// let mdinpBox = document.querySelector('.content-md')
-		// mdinpBox.addEventListener('wheel', contentScroll)
-		// mdinpBox.querySelector('.uni-textarea-textarea').addEventListener('scroll', contentScroll)
+		// observer.disconnect();
+		// 文本选择
+		// document.addEventListener('mouseup', webTextSelect);
+		// 文本替换（快捷键）
+		// document.addEventListener('keydown', shortcut);
 	}
 
 })
