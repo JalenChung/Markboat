@@ -41,14 +41,17 @@
             .shortcut-italic{
                 background-image: url(../images/italic-light.png);
             }
-            .shortcut-font{
-                background-image: url(../images/font-light.png);
+            .shortcut-underline{
+                background-image: url(../images/underline-light.png);
+            }
+            .shortcut-mark{
+                background-image: url(../images/paintbrush-light.png);
             }
             .shortcut-quote{
                 background-image: url(../images/quote-right-light.png);
             }
             .shortcut-line{
-                background-color: #fff;
+                background-image: url(../images/minus-light.png);
             }
         }
     }

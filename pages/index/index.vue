@@ -5,7 +5,7 @@
 			<view class="header">
 				<view class="nav-btns-box" @mouseover="dropdownSelect">
 					<view class="markboat-logo"></view>
-					<dropdown :navText='"文件(F)"' data-id="dropdown-F" :isOpen="dropdownOpen" :nodeName="'F'"
+					<dropdown :navText="`文件${platform == 'h5' ? '(F)' : ''}`" data-id="dropdown-F" :isOpen="dropdownOpen" :nodeName="'F'"
 						:active="activeDropdown == 'F'" @touchend="dropdownTouchend">
 						<dropdown-item>
 							<view>新建</view>
@@ -20,19 +20,16 @@
 							<view>保存</view>
 						</dropdown-item>
 					</dropdown>
-					<dropdown :navText='"文件(T)"' data-id="dropdown-T" :isOpen="dropdownOpen" :nodeName="'T'"
+					<dropdown :navText="`帮助${platform == 'h5' ? '(H)' : ''}`" data-id="dropdown-T" :isOpen="dropdownOpen" :nodeName="'T'"
 						:active="activeDropdown == 'T'" @touchend="dropdownTouchend">
 						<dropdown-item>
-							<view>新建</view>
+							<view>Markdown语法帮助</view>
 						</dropdown-item>
 						<dropdown-item>
-							<view>导入</view>
+							<view>反馈/建议</view>
 						</dropdown-item>
 						<dropdown-item>
-							<view>导出</view>
-						</dropdown-item>
-						<dropdown-item>
-							<view>保存</view>
+							<view>关于</view>
 						</dropdown-item>
 					</dropdown>
 				</view>
@@ -65,7 +62,8 @@
 								</view>
 							</view>
 							<!-- md内容 -->
-							<textarea
+							<textarea v-if="isMdShow" :disabled="isMdDisabled" type="text" @focus="mdTextareaFocus"
+								:focus="isMdfocused" :cursor="cursorPosition"
 								:style="`line-height: ${lineHeight}px; height: ${mdinpHeight > windowHeight - hf_height * 2 ? mdinpHeight : windowHeight - hf_height * 2}px;`"
 								class="md-inp-box" maxlength="999999999999" @input="mdInput" v-model="mdContent"
 								@tap="activeLine" @mouseover="contentMouseover_l"></textarea>
@@ -90,24 +88,41 @@
 			<view class="footer">
 				<view class="shortcut">
 					<!-- 目录控制器 -->
-					<view class="catalogController" @click="catalogController">
+					<view class="catalogController finger" @click="catalogController">
 						<view v-if="catalogShow" class="list-img-open"></view>
 						<view v-else="catalogShow" class="list-img-close"></view>
 					</view>
 					<!-- 分割线 -->
 					<view class="split"></view>
-					<!-- 快捷键：文字类 -->
-					<view class="shortcut-bold"></view>
-					<view class="shortcut-strikethrough"></view>
-					<view class="shortcut-italic"></view>
-					<view class="shortcut-font"></view>
-					<view class="shortcut-quote"></view>
+					<!-- 快捷键：改造类 -->
+					<view @tap="shortcutFn" data-id="b" class="finger shortcut-bold">
+						<view class="tip">Ctrl + b</view>
+					</view>
+					<view @tap="shortcutFn" data-id="d" class="finger shortcut-strikethrough">
+						<view class="tip">Ctrl + d</view>
+					</view>
+					<view @tap="shortcutFn" data-id="i" class="finger shortcut-italic">
+						<view class="tip">Ctrl + i</view>
+					</view>
+					<view @tap="shortcutFn" data-id="u" class="finger shortcut-underline">
+						<view class="tip">Ctrl + u</view>
+					</view>
+					<view @tap="shortcutFn" data-id="m" class="finger shortcut-mark">
+						<view class="tip">Ctrl + m</view>
+					</view>
+					<view @tap="shortcutFn" data-id="q" class="finger shortcut-quote">
+						<view class="tip">Ctrl + q</view>
+					</view>
 					<!-- 分割线 -->
 					<view class="split"></view>
-					<!-- 快捷键：添加一些其他的东西 -->
-					<view class="shortcut-line"></view>
+					<!-- 快捷键：插入类 -->
+					<view @tap="shortcutFn" data-id="l" class="shortcut-line">
+						<view class="tip">Ctrl + l</view>
+					</view>
 
-					<view @click="testFn">
+
+
+					<view @tap="testFn">
 						<view>test</view>
 					</view>
 
@@ -127,7 +142,7 @@
 			<!-- 导入弹窗 -->
 			<view class="import-popup" :class="popupShow ? 'popup-show' : ''">
 				<view class="popup-header">
-					<view style="font-size:medium;">导入</view>
+					<view :style="`font-size: ${platform == 'h5' ? 'medium' : 'large'};`">导入</view>
 					<view class="finger" style="font-size:larger;" @click="closePop">×</view>
 				</view>
 				<!-- H5 -->
@@ -155,6 +170,8 @@
 import MarkdownIt from 'markdown-it'
 import toc from 'markdown-it-toc-done-right'
 import anchor from 'markdown-it-anchor'
+import ins from 'markdown-it-ins'
+import mark from 'markdown-it-mark'
 import Turndown from 'turndown'
 // 自定义组件
 import Dropdown from '../../components/dropdown/index.vue'
@@ -584,37 +601,101 @@ function confirm() {
 }
 
 // 快捷键相关===================================================
+let textRange = null
 function webTextSelect() {
 	// 当鼠标释放时，获取选中的文本  
-	let selectedText = window.getSelection().toString();
-	if (selectedText) {
-		console.log('选中的文本是：', selectedText);
-	} else {
-		console.log('没有选中任何文本。');
+	uni.getSelectedTextRange().then(res => {
+		textRange = res
+	})
+}
+let cursorPosition = ref(-1)
+let _cursorPosition = -1
+function shortcutFn(e, key) {
+	if (e) {
+		key = e.target.dataset.id
+	}
+	let start = textRange.start ? textRange.start : 0, end = textRange.end
+	let processedContent = ''
+	switch (key) {
+		case 'b':
+			processedContent = `**${mdContent.value.substring(start, end)}**`
+			_cursorPosition = end + 2
+			textReplace(processedContent, start, end)
+			break;
+		case 'd':
+			processedContent = `~~${mdContent.value.substring(start, end)}~~`
+			_cursorPosition = end + 2
+			textReplace(processedContent, start, end)
+			break;
+		case 'i':
+			processedContent = `*${mdContent.value.substring(start, end)}*`
+			_cursorPosition = end + 1
+			textReplace(processedContent, start, end)
+			break;
+		case 'u':
+			// 下划线
+			processedContent = `++${mdContent.value.substring(start, end)}++`
+			_cursorPosition = end + 2
+			textReplace(processedContent, start, end)
+			break;
+		case 'm':
+			// 下划线
+			processedContent = `==${mdContent.value.substring(start, end)}==`
+			_cursorPosition = end + 2
+			textReplace(processedContent, start, end)
+			break;
+		case 'q':
+			// 引用
+			processedContent = `> ${mdContent.value.substring(start, end)}`
+			_cursorPosition = end + 1
+			textReplace(processedContent, start, end)
+			break;
+		case 'l':
+			// 引用
+			mdInsert('\n\n---\n', end)
+			break;
+		default:
+			break;
 	}
 }
-function shortcut(event) {
-	// 检查是否按下了 Ctrl+R  
-	if (event.ctrlKey && event.key === 'r') {
-		// 阻止默认行为（如果有的话）  
+function shortcutTrigger(event) {
+	if (event.ctrlKey) {
 		event.preventDefault();
-		// 获取选中的文本  
-		const selectedText = window.getSelection().toString();
-		// 替换选中的文本
-		if (selectedText) {
-			const range = window.getSelection().getRangeAt(0);
-			console.log(range);
-
-			range.deleteContents(); // 删除选中的文本  
-			const replacementNode = document.createTextNode('xxxx');
-			range.insertNode(replacementNode);
-			// 可选：将光标移动到替换后的文本末尾===============
-			range.setStartAfter(replacementNode);
-			range.setEndAfter(replacementNode);
-			window.getSelection().removeAllRanges();
-			window.getSelection().addRange(range);
-		}
+		shortcutFn(null, event.key)
 	}
+}
+let isMdfocused = ref(true)
+let isMdDisabled = ref(false)
+let isMdShow = ref(true)
+function textReplace(replacement, start, end) {
+	let str = mdContent.value;
+	// 从开始位置之前的所有内容  
+	let before = str.slice(0, start);
+	// 从结束位置之后的所有内容  
+	let after = str.slice(end);
+	// 关闭原先的内容让文本失焦
+	isMdShow.value = false
+	// 三部分连接起来形成新的字符串  
+	mdContent.value = before + replacement + after;
+	// 重新聚焦
+	setTimeout(() => isMdShow.value = true)
+	// 重新计算右边页面和行号
+	mdInput()
+	_overflowCalc()
+}
+function mdInsert(insertString, position) {
+	let newVal = mdContent.value.slice(0, position) + insertString + mdContent.value.slice(position)
+	// 关闭原先的内容让文本失焦
+	isMdShow.value = false
+	mdContent.value = newVal
+	// 重新聚焦
+	setTimeout(() => isMdShow.value = true)
+	// 重新计算右边页面和行号
+	mdInput()
+	_overflowCalc()
+}
+function mdTextareaFocus() {
+	cursorPosition.value = _cursorPosition;
 }
 
 // 底部========================================================
@@ -714,11 +795,21 @@ onBeforeMount(() => {
 			catalogData.value = newObj
 			return html
 		}
-	})
+	}).use(ins).use(mark)
 	let oldId = null, id = null, parentName = '';
 	// dui新加入的元素修改
 	mdParser.value.core.ruler.push('add_attributes', function (state) {
 		state.tokens.forEach(token => {
+			if (token.type == "blockquote_open") {
+				token.attrSet('style',
+					`
+					position: relative;
+					padding: 0 16px;
+					border-left: 4px solid gray;
+    				margin-bottom: 16px;
+					`
+				)
+			}
 			if (token.tag.includes('h') && token.type == "heading_open") {
 				let _id = 'h-' + token.attrGet('id')
 				token.attrSet('id', _id)
@@ -777,14 +868,14 @@ onMounted(() => {
 		// 之后，你可以停止观察  
 		// observer.disconnect();
 		// 文本选择
-		// document.addEventListener('mouseup', webTextSelect);
+		document.addEventListener('mouseup', webTextSelect);
 		// 文本替换（快捷键）
-		// document.addEventListener('keydown', shortcut);
+		document.addEventListener('keydown', shortcutTrigger);
 	}
 
 })
 function testFn(e) {
-	// console.log("test");
+	console.log(uni);
 	// console.log(catalogData.value);
 }
 </script>

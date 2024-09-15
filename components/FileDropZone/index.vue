@@ -55,16 +55,19 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
-#file-drop-zone {
+.file-drop-zone {
     width: 100%;
     height: 120px;
-    border: 2px #a0a0a0 dashed;
     color: #a0a0a0;
-    border-radius: 10px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin: 10px 0px;
+}
+
+@media screen and (max-width: 480px) {
+    .file-drop-zone {
+        height: 90px;
+    }
 }
 </style>

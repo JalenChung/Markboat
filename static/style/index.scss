@@ -60,6 +60,10 @@ $dark-border-color-1: #555555;
             height: 40px;
         }
     }
+    .import-popup{
+        width: 260px;
+        left: calc(50% - 150px);
+    }
 }
 // 平板只改变编辑器，其他与手机相同
 @media screen and (min-width: 481px) and (max-width: 999px) {
@@ -96,6 +100,10 @@ $dark-border-color-1: #555555;
         .shortcut {
             height: 30px;
         }
+    }
+    .import-popup{
+        width: 360px;
+        left: calc(50% - 200px);
     }
 }
 /* 桌面样式 */
@@ -137,6 +145,10 @@ $dark-border-color-1: #555555;
         .shortcut {
             height: 30px;
         }
+    }
+    .import-popup{
+        width: 360px;
+        left: calc(50% - 200px);
     }
 }
 
@@ -332,24 +344,29 @@ $dark-border-color-1: #555555;
         .split {
             height: 22px;
             width: 1px;
-            margin: 4px 15px;
+            margin: 10px;
         }
         [class*="shortcut-"] {
-            width: 30px;
-            height: 30px;
-            background-size: 50% 50%;
+            width: 25px;
+            height: 25px;
+            background-size: 60% 60%;
             background-position: 50% 50%;
             background-repeat: no-repeat;
             opacity: 0.8;
+            position: relative;
+            .tip{
+                display: none;
+                position: absolute;
+                top: -30px;
+                width: max-content;
+            }
         }
-        .shortcut-font {
-            background-size: 65% 65%;
-        }
-        .shortcut-line {
-            width: 16px;
-            height: 2px;
-            margin: 0px 6px;
+        [class*="shortcut-"]:hover{
             border-radius: 5px;
+            background-color: #313131;
+            .tip{
+                display: block;
+            }
         }
         // 转换器
         .switcher {
@@ -393,9 +410,9 @@ $dark-border-color-1: #555555;
 .import-popup {
     display: none;
     position: absolute;
-    width: 360px;
+    z-index: 40;
+    // width: 360px;
     padding: 10px 20px 15px 20px;
-    left: calc(50% - 200px);
     top: calc(50% - 150px);
     border-radius: 10px;
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, 0.666);
@@ -419,6 +436,10 @@ $dark-border-color-1: #555555;
         }
     }
     .fileChange {
+        border: 2px #a0a0a0 dashed;
+        border-radius: 10px;
+        margin-top: 10px;
+        margin-bottom: 20px;
         input {
             display: block;
             font-size: 12px;
@@ -463,14 +484,3 @@ $dark-border-color-1: #555555;
     user-select: none;
 }
 
-// .new-inp {
-//     width: max-content;
-//     background-color: transparent;
-//     display: inline-block;
-//     height: 100%;
-//     padding: 0px;
-//     margin: 0px;
-//     border: none;
-//     color: #C5C5C5;
-//     outline-style: none;
-// }
