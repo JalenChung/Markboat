@@ -34,7 +34,7 @@ function ondropprevent(event) {
 }
 
 onMounted(() => {
-    if (props.mode) {
+    if (props.mode == 'h5') {
         const elem = document.getElementById('file-drop-zone');
         elem.addEventListener('drop', ondrop, false);
         elem.addEventListener('dragleave', ondropprevent, false);
@@ -44,7 +44,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-    if (props.mode) {
+    if (props.mode == 'h5') {
         const elem = document.getElementById('file-drop-zone');
         elem.removeEventListener('drop', ondrop);
         elem.removeEventListener('dragleave', ondropprevent);

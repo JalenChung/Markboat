@@ -5,8 +5,9 @@
 			<view class="header">
 				<view class="nav-btns-box" @mouseover="dropdownSelect">
 					<view class="markboat-logo"></view>
-					<dropdown :navText="`文件${platform == 'h5' ? '(F)' : ''}`" data-id="dropdown-F" :isOpen="dropdownOpen" :nodeName="'F'"
-						:active="activeDropdown == 'F'" @touchend="dropdownTouchend">
+					<dropdown :navText="`文件${platform == 'h5' ? '(F)' : ''}`" data-id="dropdown-F"
+						:isOpen="dropdownOpen" :nodeName="'F'" :active="activeDropdown == 'F'"
+						@touchend="dropdownTouchend">
 						<dropdown-item>
 							<view>新建</view>
 						</dropdown-item>
@@ -20,8 +21,9 @@
 							<view>保存</view>
 						</dropdown-item>
 					</dropdown>
-					<dropdown :navText="`帮助${platform == 'h5' ? '(H)' : ''}`" data-id="dropdown-T" :isOpen="dropdownOpen" :nodeName="'T'"
-						:active="activeDropdown == 'T'" @touchend="dropdownTouchend">
+					<dropdown :navText="`帮助${platform == 'h5' ? '(H)' : ''}`" data-id="dropdown-T"
+						:isOpen="dropdownOpen" :nodeName="'T'" :active="activeDropdown == 'T'"
+						@touchend="dropdownTouchend">
 						<dropdown-item>
 							<view>Markdown语法帮助</view>
 						</dropdown-item>
@@ -33,8 +35,8 @@
 						</dropdown-item>
 					</dropdown>
 				</view>
-				<view class="nav-path-box">
-					../../文件
+				<view class="flieinfo">
+					<view>{{ readRes.isSucceed ? parsedFile.name : 'newMarkdown.md' }}</view>
 				</view>
 			</view>
 			<view class="main">
@@ -62,11 +64,12 @@
 								</view>
 							</view>
 							<!-- md内容 -->
-							<textarea v-if="isMdShow" :disabled="isMdDisabled" type="text" @focus="mdTextareaFocus"
-								:focus="isMdfocused" :cursor="cursorPosition"
+							<textarea v-if="isMdShow" :disabled="isMdDisabled" :show-confirm-bar="false" type="text"
+								@focus="mdTextareaFocus" :focus="isMdfocused" :cursor="cursorPosition"
 								:style="`line-height: ${lineHeight}px; height: ${mdinpHeight > windowHeight - hf_height * 2 ? mdinpHeight : windowHeight - hf_height * 2}px;`"
 								class="md-inp-box" maxlength="999999999999" @input="mdInput" v-model="mdContent"
-								@tap="activeLine" @mouseover="contentMouseover_l"></textarea>
+								@tap="activeLine" @touchend="mdTouchend" @longpress="mdLongpress"
+								@mouseover="contentMouseover_l"></textarea>
 						</scroll-view>
 
 						<scroll-view class="content-html" @scroll="htmlContentScroll" v-if="platform == 'h5'"
@@ -85,7 +88,7 @@
 
 			</view>
 			<view class="placeholder"></view>
-			<view class="footer">
+			<view class="footer" :style="`bottom: ${footerBottom}px;`">
 				<view class="shortcut">
 					<!-- 目录控制器 -->
 					<view class="catalogController finger" @click="catalogController">
@@ -119,18 +122,22 @@
 					<view @tap="shortcutFn" data-id="l" class="shortcut-line">
 						<view class="tip">Ctrl + l</view>
 					</view>
-
-
-
-					<view @tap="testFn">
+					<!-- 分割线 -->
+					<!-- <view class="split"></view>
+					<view @tap="undo" data-id="l" class="shortcut-redoundo">
+						<view class="tip">Ctrl + z</view>
+					</view>
+					<view @tap="redo" data-id="l" class="shortcut-redoundo">
+						<view class="tip">Ctrl + y</view>
+					</view> -->
+					<!-- <view @tap="testFn">
 						<view>test</view>
 					</view>
-
 					<view>_</view>
 					<view>s</view>
 					<view>&nbsp;</view>
 					<view>M</view>
-					<view>中</view>
+					<view>中</view> -->
 
 					<view class="switcher" v-if="showSwitcher" @click="switcherFn"
 						:class="displayMode == '1' ? 'show-md' : 'show-html'">
@@ -147,12 +154,12 @@
 				</view>
 				<!-- H5 -->
 				<view class="fileChange">
-					<FileDropZone @drop="ondrop" @click="chooseFile" :mode="platform">
+					<FileDropZone @drop="ondrop" @tap="chooseFile" :mode="platform">
 						<view style="font-size: 30px;">+</view>
-						<view>点击选择文件 or 拖动文件到此处</view>
+						<view>{{ platform == 'h5' ? '点击选择文件/' : '' }}拖动文件到此处</view>
 					</FileDropZone>
 				</view>
-
+				<view class="selected-box" v-text="parsedFile.name"></view>
 				<view class="btn-box clearfix">
 					<button @click="confirm">确定</button>
 					<button @click="closePop">取消</button>
@@ -185,7 +192,6 @@ import throttle from '../../static/js/throttle.js'
 import debounce from '@/static/js/debounce.js'
 
 import { ref, watch, computed, onBeforeMount, onMounted, onBeforeUpdate, onUpdated } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
 
 let windowWidth = ref(0)
 let windowHeight = ref(0)
@@ -443,8 +449,9 @@ watch(mdContent, (newVal, oldVal) => {
 	_overflowCalc()
 	if (!oldVal) {
 		mdIncrement = 0
+	} else {
+		mdIncrement = newVal.length > oldVal.length ? 1 : -1
 	}
-	mdIncrement = newVal.length > oldVal.length ? 1 : -1
 });
 // 当观察到变化时执行的回调函数  
 function htmlInput(mutationsList, observer) {
@@ -465,7 +472,7 @@ let mdContentScrollTop = ref(0)
 let htmlContentScrollTop = ref(0)
 let wxmlContentScrollTop = ref(0)
 function mdContentScroll(e) {
-	if (scrollTarget == 1 || platform != 'h5') {
+	if (scrollTarget == 1 || platform.value != 'h5') {
 		mdContentScrollTop.value = e.detail.scrollTop // 给行号盒子用的
 		let editorHeight = windowHeight.value - lineHeight.value * 2
 		// 右边的滚动比例 	
@@ -494,6 +501,7 @@ function wxmlContentScroll(e) {
 	// console.log(proportion);
 	mdContentScrollTop.value = (mdinpHeight.value - editorHeight) * proportion
 }
+let footerBottom = ref(0)
 // 点击md内容，激活行高亮
 function activeLine(e) {
 	if (mdContent.value) {
@@ -515,6 +523,33 @@ function activeLine(e) {
 			}
 		}
 	}
+	isMdfocused.value = true
+	if (platform.value != 'h5') {
+		wx.onKeyboardHeightChange(res => {
+			console.log(res.height)
+			footerBottom.value = res.height
+		})
+	}
+}
+function mdTouchend() {
+	if (platform.value != 'h5') {
+		wx.getSelectedTextRange({
+			complete: res => {
+				console.log(res);
+				textRange = res
+			}
+		})
+	}
+}
+function mdLongpress() {
+	if (platform.value != 'h5') {
+		wx.getSelectedTextRange({
+			complete: res => {
+				console.log(res);
+				textRange = res
+			}
+		})
+	}
 }
 // 滑动目标（预览内容）
 let previewScrollTarget = ref('');
@@ -530,37 +565,101 @@ function headlineSelect(e) {
 	}).exec();
 }
 
-// 导入=======================================================
+// 导入 / 文件=======================================================
 let popupShow = ref(false)
+let newFile = null // 待解析的
+let parsedFile = ref({
+	name: '',
+	type: '',
+	content: null
+})// 已解析的
+let readRes = ref({
+	isSucceed: false,
+	msg: ''
+})
+function fileObjInit() {
+	parsedFile.value = {
+		name: '',
+		type: '',
+		content: null
+	}
+}
 // 按钮触发选择  
 function chooseFile() {
-	uni.chooseFile({
-		success: (res) => {
-			let file = res.tempFiles[0]
-			readFile(file)
-		}
-	})
+	fileObjInit()
+	if (platform.value == 'h5') {
+		uni.chooseFile({
+			success: (res) => {
+				let file = res.tempFiles[0]
+				readFile(file)
+			}
+		})
+	}
+	if (platform.value != 'h5') {
+		wx.chooseMessageFile({
+			success: (res) => {
+				console.log(res);
+				let file = res.tempFiles[0]
+				readFile(file)
+			},
+			fail: (err) => {
+				console.error(err);
+			}
+		})
+	}
 }
 // 拖动触发选择
 function ondrop(e) {
+	fileObjInit()
 	const file = e.files[0];
 	readFile(file)
 }
 // 识别文件类型 and 读取文件输出为字符串 to 
 function readFile(file) {
 	if (file) {
-		console.log(file);
 		parsedFile.value.name = file.name
-		parsedFile.value.type = getFileExtension(file.name)
-
-		const reader = new FileReader();
-		reader.onload = function (e) {
-			parsedFile.value.content = e.target.result;
-		};
-		// 读取文件内容  
-		reader.readAsText(file);
+		let type = parsedFile.value.type = getFileExtension(file.name)
+		// h5端的文件读取
+		if (platform.value == 'h5') {
+			console.log(file);
+			newFile = file
+			if (type == 'md' || type == 'html') {
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					parsedFile.value.content = e.target.result;
+				};
+				// 读取文件内容  
+				reader.readAsText(newFile);
+			} else {
+				readRes.value.isSucceed = false
+				readRes.value.msg = '暂不支持该类型文件！'
+			}
+		}
+		// 微信端的文件读取
+		if (platform.value != 'h5') {
+			if (type == 'md' || type == 'html') {
+				wx.getFileSystemManager().readFile({
+					filePath: file.path, // 文件的本地路径  
+					encoding: 'utf8', // 编码格式  
+					success: res => {
+						// res.data 是文件的内容  
+						console.log(res.data);
+						parsedFile.value.content = res.data
+					},
+					fail: console.error
+				});
+			} else {
+				readRes.value.isSucceed = false
+				readRes.value.msg = '暂不支持该类型文件！'
+			}
+		}
+	} else {
+		readRes.value.isSucceed = false
+		readRes.value.msg = '文件读取失败'
+		return 0;
 	}
 }
+
 function getFileExtension(filename) {
 	// 使用split('.')将字符串按'.'分割成数组  
 	// 数组中的最后一个元素就是最后一个'.'后面的字符串  
@@ -575,28 +674,27 @@ function closePop() {
 	popupShow.value = false
 }
 function confirm() {
-	// 判断解析类型并传递文件内容
-	switch (parsedFile.value.type) {
-		case 'md':
+	if (parsedFile.value.content) {
+		readRes.value.isSucceed = true
+		readRes.value.msg = '文件读取成功'
+		console.log(parsedFile.value);
+
+		if (parsedFile.value.type == 'md') {
 			mdContent.value = parsedFile.value.content
 			// 确认导入md之后立即做一次解析
 			htmlContent.value = mdParser.value.render(mdContent.value)
-			break;
-		case 'html':
-			// 确认导入html之后，也立即做一次html to md解析
-			// console.log("解析前：" + parsedFile.value.content);
+			if ((platform.value != 'h5')) {
+				wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
+			}
+		}
+		if (parsedFile.value.type == 'html') {
 			mdContent.value = htmlParser.value.turndown('' + parsedFile.value.content)
-			// console.log("解析后：" + mdContent.value);
+			// 确认导入md之后立即做一次解析
 			htmlContent.value = mdParser.value.render(mdContent.value)
-			break;
-
-		default:
-			mdContent.value = '暂不支持此类型文件！'
-			break;
+		}
 	}
 	// 为了方便查看，第一次导入后关闭导航
-	slashShow.value = 'display: block;'
-	catalogShow.value = false
+	// catalogController()
 	closePop()
 }
 
@@ -614,57 +712,70 @@ function shortcutFn(e, key) {
 	if (e) {
 		key = e.target.dataset.id
 	}
-	let start = textRange.start ? textRange.start : 0, end = textRange.end
 	let processedContent = ''
-	switch (key) {
-		case 'b':
-			processedContent = `**${mdContent.value.substring(start, end)}**`
-			_cursorPosition = end + 2
-			textReplace(processedContent, start, end)
-			break;
-		case 'd':
-			processedContent = `~~${mdContent.value.substring(start, end)}~~`
-			_cursorPosition = end + 2
-			textReplace(processedContent, start, end)
-			break;
-		case 'i':
-			processedContent = `*${mdContent.value.substring(start, end)}*`
-			_cursorPosition = end + 1
-			textReplace(processedContent, start, end)
-			break;
-		case 'u':
-			// 下划线
-			processedContent = `++${mdContent.value.substring(start, end)}++`
-			_cursorPosition = end + 2
-			textReplace(processedContent, start, end)
-			break;
-		case 'm':
-			// 下划线
-			processedContent = `==${mdContent.value.substring(start, end)}==`
-			_cursorPosition = end + 2
-			textReplace(processedContent, start, end)
-			break;
-		case 'q':
-			// 引用
-			processedContent = `> ${mdContent.value.substring(start, end)}`
-			_cursorPosition = end + 1
-			textReplace(processedContent, start, end)
-			break;
-		case 'l':
-			// 引用
-			mdInsert('\n\n---\n', end)
-			break;
-		default:
-			break;
+	if (textRange.hasOwnProperty('start') && textRange.start != textRange.end) {
+		// 改造类的快捷键，有start
+		let start = textRange.start
+		let end = textRange.end
+		switch (key) {
+			case 'b':
+				processedContent = `**${mdContent.value.substring(start, end)}**`
+				_cursorPosition = end + 2
+				textReplace(processedContent, start, end)
+				break;
+			case 'd':
+				processedContent = `~~${mdContent.value.substring(start, end)}~~`
+				_cursorPosition = end + 2
+				textReplace(processedContent, start, end)
+				break;
+			case 'i':
+				processedContent = `*${mdContent.value.substring(start, end)}*`
+				_cursorPosition = end + 1
+				textReplace(processedContent, start, end)
+				break;
+			case 'u':
+				// 下划线
+				processedContent = `++${mdContent.value.substring(start, end)}++`
+				_cursorPosition = end + 2
+				textReplace(processedContent, start, end)
+				break;
+			case 'm':
+				// 下划线
+				processedContent = `==${mdContent.value.substring(start, end)}==`
+				_cursorPosition = end + 2
+				textReplace(processedContent, start, end)
+				break;
+			case 'q':
+				// 引用
+				processedContent = `> ${mdContent.value.substring(start, end)}`
+				_cursorPosition = end + 1
+				textReplace(processedContent, start, end)
+				break;
+			default:
+				break;
+		}
+	} else {
+		// 插入类的快捷键，没有start
+		let end = textRange.end ? textRange.end : mdContent.value.length
+		switch (key) {
+			case 'l':
+				// 引用
+				mdInsert('\n\n---\n', end)
+				_cursorPosition = end + 6
+				break;
+
+			default:
+				break;
+		}
 	}
 }
 function shortcutTrigger(event) {
 	if (event.ctrlKey) {
-		event.preventDefault();
+		// event.preventDefault();
 		shortcutFn(null, event.key)
 	}
 }
-let isMdfocused = ref(true)
+let isMdfocused = ref(false)
 let isMdDisabled = ref(false)
 let isMdShow = ref(true)
 function textReplace(replacement, start, end) {
@@ -696,6 +807,18 @@ function mdInsert(insertString, position) {
 }
 function mdTextareaFocus() {
 	cursorPosition.value = _cursorPosition;
+}
+let history = {
+	datas: [],
+	index: 0,
+}
+// ctrl + z
+function undo() {
+
+}
+// ctrl + y
+function redo() {
+
 }
 
 // 底部========================================================
@@ -779,6 +902,9 @@ onBeforeMount(() => {
 	// 仅在手机端才显示切换器 md / pre
 	showSwitcher.value = windowWidth.value <= 480
 
+	// 以下为【md历史记录】的初始化
+	// history.datas = new Array(10)
+
 	// 以下为【md解析器】的设置
 	mdParser.value = new MarkdownIt({
 		html: false,
@@ -855,6 +981,8 @@ onBeforeMount(() => {
 	});
 })
 onMounted(() => {
+	console.log(platform.value);
+
 	// 设备判断 - 初始化 - 绑定方法
 	if (platform.value == 'h5') {
 		// 选择目标节点  
@@ -868,11 +996,10 @@ onMounted(() => {
 		// 之后，你可以停止观察  
 		// observer.disconnect();
 		// 文本选择
-		document.addEventListener('mouseup', webTextSelect);
+		document.querySelector('.content-md').addEventListener('mouseup', webTextSelect);
 		// 文本替换（快捷键）
 		document.addEventListener('keydown', shortcutTrigger);
 	}
-
 })
 function testFn(e) {
 	console.log(uni);
