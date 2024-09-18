@@ -60,8 +60,10 @@ $dark-border-color-1: #555555;
             height: 40px;
         }
     }
-    .import-popup{
-        width: 260px;
+    .popup {
+        .fileChange {
+            width: 260px;
+        }
         left: calc(50% - 150px);
     }
 }
@@ -101,8 +103,10 @@ $dark-border-color-1: #555555;
             height: 30px;
         }
     }
-    .import-popup{
-        width: 360px;
+    .popup {
+        .fileChange {
+            width: 360px;
+        }
         left: calc(50% - 200px);
     }
 }
@@ -146,8 +150,10 @@ $dark-border-color-1: #555555;
             height: 30px;
         }
     }
-    .import-popup{
-        width: 360px;
+    .popup {
+        .fileChange {
+            width: 360px;
+        }
         left: calc(50% - 200px);
     }
 }
@@ -194,7 +200,7 @@ $dark-border-color-1: #555555;
             [class*="content-"] {
                 height: 100%;
             }
-            
+
             .content-md {
                 width: calc(100% / 2);
                 /* 滚动条整体样式 */
@@ -221,7 +227,7 @@ $dark-border-color-1: #555555;
                     ::-webkit-scrollbar {
                         width: 0px;
                     }
-    
+
                     .line-num {
                         width: 100%;
                         text-align: right;
@@ -354,17 +360,17 @@ $dark-border-color-1: #555555;
             background-repeat: no-repeat;
             opacity: 0.8;
             position: relative;
-            .tip{
+            .tip {
                 display: none;
                 position: absolute;
                 top: -30px;
                 width: max-content;
             }
         }
-        [class*="shortcut-"]:hover{
+        [class*="shortcut-"]:hover {
             border-radius: 5px;
             background-color: #313131;
-            .tip{
+            .tip {
                 display: block;
             }
         }
@@ -407,7 +413,7 @@ $dark-border-color-1: #555555;
         }
     }
 }
-.import-popup {
+.popup {
     display: none;
     position: absolute;
     z-index: 40;
@@ -446,8 +452,21 @@ $dark-border-color-1: #555555;
             margin: 0px auto;
         }
     }
+    .exportflie{
+        display: flex;
+        align-items: center;
+        margin: 10px 0 ;
+        height: 50px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #94949429;
+        input{
+            border-bottom: 1px solid;
+            margin-left: 10px;
+        }
+    }
 
-    .selected-box{
+    .selected-box {
         height: 30px;
     }
 
@@ -486,4 +505,3 @@ $dark-border-color-1: #555555;
     cursor: pointer;
     user-select: none;
 }
-

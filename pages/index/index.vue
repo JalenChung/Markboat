@@ -12,10 +12,10 @@
 							<view>新建</view>
 						</dropdown-item>
 						<dropdown-item>
-							<view @click="popupShow = true">导入</view>
+							<view @click="importFile">导入</view>
 						</dropdown-item>
 						<dropdown-item>
-							<view>导出</view>
+							<view @click="exportMD">导出</view>
 						</dropdown-item>
 						<dropdown-item>
 							<view>保存</view>
@@ -146,20 +146,30 @@
 					</view>
 				</view>
 			</view>
-			<!-- 导入弹窗 -->
-			<view class="import-popup" :class="popupShow ? 'popup-show' : ''">
+			<!-- 弹窗 -->
+			<view class="popup" :class="popupShow ? 'popup-show' : ''">
 				<view class="popup-header">
-					<view :style="`font-size: ${platform == 'h5' ? 'medium' : 'large'};`">导入</view>
+					<view :style="`font-size: ${platform == 'h5' ? 'medium' : 'large'};`">{{ popupTitle }}</view>
 					<view class="finger" style="font-size:larger;" @click="closePop">×</view>
 				</view>
-				<!-- H5 -->
-				<view class="fileChange">
-					<FileDropZone @drop="ondrop" @tap="chooseFile" :mode="platform">
-						<view style="font-size: 30px;">+</view>
-						<view>{{ platform == 'h5' ? '点击选择文件/' : '' }}拖动文件到此处</view>
-					</FileDropZone>
+				<!-- 导入 -->
+				<view v-if="popupModel == 1">
+					<view class="fileChange">
+						<FileDropZone @drop="ondrop" @tap="chooseFile" :mode="platform">
+							<view style="font-size: 30px;">+</view>
+							<view>{{ platform == 'h5' ? '点击选择文件/' : '' }}拖动文件到此处</view>
+						</FileDropZone>
+					</view>
+					<view class="selected-box" v-text="parsedFile.name"></view>
 				</view>
-				<view class="selected-box" v-text="parsedFile.name"></view>
+				<!-- 导出 -->
+				<view v-if="popupModel == 2">
+					<view class="exportflie">
+						<image :style="'width: 30px; height: 30px;'" :mode="'aspectFit'" :src="exportFileImg"></image>
+						<input v-model="exportname" type="text" name="exportnameinp" id="exportnameinp">
+						<view>.md</view>
+					</view>
+				</view>
 				<view class="btn-box clearfix">
 					<button @click="confirm">确定</button>
 					<button @click="closePop">取消</button>
@@ -203,10 +213,11 @@ let hf_height = ref(40) // 头部与脚步功能区的高度
 
 let towxml = null
 
-// let test = ref(40)
-
 // 运行平台
 let platform = ref('')
+
+let popupModel = ref(0) // 弹窗显示模式 1.导入 2.导出
+let popupTitle = ref('') // 弹出标题文字
 
 // 目录宽度控制========================================
 let catalogWidth = ref(200)
@@ -659,7 +670,7 @@ function readFile(file) {
 		return 0;
 	}
 }
-
+// 通过文件名截获文件类型
 function getFileExtension(filename) {
 	// 使用split('.')将字符串按'.'分割成数组  
 	// 数组中的最后一个元素就是最后一个'.'后面的字符串  
@@ -668,36 +679,72 @@ function getFileExtension(filename) {
 	// 否则，返回空字符串或原始文件名（取决于你的需求）  
 	return parts.length > 1 ? parts.pop().toLowerCase() : '';
 }
-
 // 导入窗口开关
 function closePop() {
 	popupShow.value = false
 }
 function confirm() {
-	if (parsedFile.value.content) {
-		readRes.value.isSucceed = true
-		readRes.value.msg = '文件读取成功'
-		console.log(parsedFile.value);
+	// 导入模式
+	if (popupModel.value == 1) {
+		if (parsedFile.value.content) {
+			readRes.value.isSucceed = true
+			readRes.value.msg = '文件读取成功'
+			console.log(parsedFile.value);
 
-		if (parsedFile.value.type == 'md') {
-			mdContent.value = parsedFile.value.content
-			// 确认导入md之后立即做一次解析
-			htmlContent.value = mdParser.value.render(mdContent.value)
-			if ((platform.value != 'h5')) {
-				wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
+			if (parsedFile.value.type == 'md') {
+				mdContent.value = parsedFile.value.content
+				// 确认导入md之后立即做一次解析
+				htmlContent.value = mdParser.value.render(mdContent.value)
+				if ((platform.value != 'h5')) {
+					wxmlContent.value = towxml(htmlContent.value, 'html', wxmlOptions);
+				}
+			}
+			if (parsedFile.value.type == 'html') {
+				mdContent.value = htmlParser.value.turndown('' + parsedFile.value.content)
+				// 确认导入md之后立即做一次解析
+				htmlContent.value = mdParser.value.render(mdContent.value)
 			}
 		}
-		if (parsedFile.value.type == 'html') {
-			mdContent.value = htmlParser.value.turndown('' + parsedFile.value.content)
-			// 确认导入md之后立即做一次解析
-			htmlContent.value = mdParser.value.render(mdContent.value)
-		}
+	}
+	// 导出模式
+	if (popupModel.value == 2) {
+		console.log(exportname.value);
+		downloadMarkdown(mdContent.value, exportname.value)
 	}
 	// 为了方便查看，第一次导入后关闭导航
 	// catalogController()
 	closePop()
 }
+function downloadMarkdown(text, fileName) {
+	if (platform.value == 'h5') {
+		const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+		const url = URL.createObjectURL(blob);
 
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = fileName + '.md';
+		document.body.appendChild(a);
+		a.click();
+
+		// 清理  
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+	}
+
+}
+function importFile() {
+	popupShow.value = true
+	popupModel.value = 1
+	popupTitle.value = '导入'
+}
+// 导出
+function exportMD() {
+	popupShow.value = true
+	popupModel.value = 2
+	popupTitle.value = '导出'
+}
+let exportFileImg = ref('../../static/images/Markdown.png')
+let exportname = ref('')
 // 快捷键相关===================================================
 let textRange = null
 function webTextSelect() {
