@@ -25,7 +25,8 @@
 						:isOpen="dropdownOpen" :nodeName="'T'" :active="activeDropdown == 'T'"
 						@touchend="dropdownTouchend">
 						<dropdown-item>
-							<view>Markdown语法帮助</view>
+							<!-- https://markdown.com.cn/ -->
+							<view @click="openGrammarHelp">Markdown语法帮助</view>
 						</dropdown-item>
 						<dropdown-item>
 							<view>反馈/建议</view>
@@ -199,7 +200,7 @@ import TestView from '../../components/TestView/index.vue'
 
 import Token from '../../static/js/mdToken.js'
 import throttle from '../../static/js/throttle.js'
-import debounce from '@/static/js/debounce.js'
+import debounce from '../../static/js/debounce.js'
 
 import { ref, watch, computed, onBeforeMount, onMounted, onBeforeUpdate, onUpdated } from 'vue';
 
@@ -574,6 +575,18 @@ function headlineSelect(e) {
 			mdContentScrollTop.value = elementBTop
 		}
 	}).exec();
+}
+
+// 帮助
+function openGrammarHelp() {
+	if (platform == 'h5') {
+		window.open('https://markdown.com.cn/', '_blank');
+	}
+	if (platform != 'h5') {
+		uni.navigateTo({
+			url: '/pages/grammarPage/index'
+		});
+	}
 }
 
 // 导入 / 文件=======================================================
