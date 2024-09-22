@@ -811,6 +811,13 @@ function shortcutFn(e, key) {
 				_cursorPosition = end + 1
 				textReplace(processedContent, start, end)
 				break;
+			case 'C':
+				// 引用
+				event.preventDefault();
+				processedContent = `${'`'}${mdContent.value.substring(start, end)}${'`'}`
+				_cursorPosition = end + 1
+				textReplace(processedContent, start, end)
+				break;
 			default:
 				break;
 		}
