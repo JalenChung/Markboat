@@ -117,11 +117,17 @@
 					<view @tap="shortcutFn" data-id="q" class="finger shortcut-quote">
 						<view class="tip">Ctrl + q</view>
 					</view>
+					<view @tap="shortcutFn" data-id="I" class="finger shortcut-inline-code">
+						<view class="tip">Ctrl + shift + i</view>
+					</view>
 					<!-- 分割线 -->
 					<view class="split"></view>
 					<!-- 快捷键：插入类 -->
 					<view @tap="shortcutFn" data-id="l" class="shortcut-line">
 						<view class="tip">Ctrl + l</view>
+					</view>
+					<view @tap="shortcutFn" data-id="C" class="shortcut-code">
+						<view class="tip">Ctrl + shift + c</view>
 					</view>
 					<!-- 分割线 -->
 					<!-- <view class="split"></view>
@@ -190,7 +196,12 @@ import toc from 'markdown-it-toc-done-right'
 import anchor from 'markdown-it-anchor'
 import ins from 'markdown-it-ins'
 import mark from 'markdown-it-mark'
+import prism from 'markdown-it-prism'
 import Turndown from 'turndown'
+// 代码高亮规则
+import prismComponents from "prismjs/components.js"
+import "prismjs/components/index.js"
+// import "prismjs/components/prism-java"
 // 自定义组件
 import Dropdown from '../../components/dropdown/index.vue'
 import DropdownItem from '../../components/dropdown-item/index.vue'
@@ -200,9 +211,15 @@ import TestView from '../../components/TestView/index.vue'
 
 import Token from '../../static/js/mdToken.js'
 import throttle from '../../static/js/throttle.js'
-import debounce from '../../static/js/debounce.js'
+import debounce from '/static/js/debounce.js'
 
 import { ref, watch, computed, onBeforeMount, onMounted, onBeforeUpdate, onUpdated } from 'vue';
+
+
+const devLanguages = prismComponents.languages 
+// Object.keys(devLanguages).forEach(e => {
+// 	console.log(e);
+// })
 
 let windowWidth = ref(0)
 let windowHeight = ref(0)
@@ -811,7 +828,7 @@ function shortcutFn(e, key) {
 				_cursorPosition = end + 1
 				textReplace(processedContent, start, end)
 				break;
-			case 'C':
+			case 'I':
 				// 引用
 				event.preventDefault();
 				processedContent = `${'`'}${mdContent.value.substring(start, end)}${'`'}`
@@ -830,7 +847,11 @@ function shortcutFn(e, key) {
 				mdInsert('\n\n---\n', end)
 				_cursorPosition = end + 6
 				break;
-
+			case 'C':
+				// 引用
+				mdInsert(`\n\n${'```请输入语言类型'} \n\n${'```'}`, end)
+				_cursorPosition = end + 5 + 7
+				break;
 			default:
 				break;
 		}
@@ -988,11 +1009,29 @@ onBeforeMount(() => {
 			catalogData.value = newObj
 			return html
 		}
-	}).use(ins).use(mark)
+	}).use(prism).use(ins).use(mark)
 	let oldId = null, id = null, parentName = '';
 	// dui新加入的元素修改
 	mdParser.value.core.ruler.push('add_attributes', function (state) {
 		state.tokens.forEach(token => {
+			// 为行内代码添加样式
+			if (token.children) {
+				if (token.nesting == 0 && token.children.length > 0) {
+					let codes = token.children.filter(e => e.type == "code_inline")
+					codes.map(e => {
+						e.attrSet('style',
+							`
+						background-color: #55555580;
+                		border-radius: 5px;
+						padding: .2em .4em;
+						`
+						)
+					})
+
+				}
+			}
+
+			// 为“引用”添加样式
 			if (token.type == "blockquote_open") {
 				token.attrSet('style',
 					`
@@ -1003,6 +1042,7 @@ onBeforeMount(() => {
 					`
 				)
 			}
+			// 为h添加id
 			if (token.tag.includes('h') && token.type == "heading_open") {
 				let _id = 'h-' + token.attrGet('id')
 				token.attrSet('id', _id)
@@ -1077,4 +1117,5 @@ function testFn(e) {
 <style>
 @import url(../../static/style/index.css);
 @import url(../../static/style/theme.css);
+@import url(/node_modules/prismjs/themes/prism-okaidia.min.css);
 </style>
