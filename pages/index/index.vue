@@ -216,7 +216,7 @@ import debounce from '/static/js/debounce.js'
 import { ref, watch, computed, onBeforeMount, onMounted, onBeforeUpdate, onUpdated } from 'vue';
 
 
-const devLanguages = prismComponents.languages 
+const devLanguages = prismComponents.languages
 // Object.keys(devLanguages).forEach(e => {
 // 	console.log(e);
 // })
@@ -475,6 +475,7 @@ function mdInput() {
 let _overflowCalc = debounce(overflowCalc, 100) // 防抖版的行号处理
 // 当md内容发生改变，则调整行提示
 watch(mdContent, (newVal, oldVal) => {
+	// mdInput()
 	_overflowCalc()
 	if (!oldVal) {
 		mdIncrement = 0
@@ -796,40 +797,46 @@ function shortcutFn(e, key) {
 		let end = textRange.end
 		switch (key) {
 			case 'b':
+				event.preventDefault();
 				processedContent = `**${mdContent.value.substring(start, end)}**`
 				_cursorPosition = end + 2
 				textReplace(processedContent, start, end)
 				break;
 			case 'd':
+				event.preventDefault();
 				processedContent = `~~${mdContent.value.substring(start, end)}~~`
 				_cursorPosition = end + 2
 				textReplace(processedContent, start, end)
 				break;
 			case 'i':
+				event.preventDefault();
 				processedContent = `*${mdContent.value.substring(start, end)}*`
 				_cursorPosition = end + 1
 				textReplace(processedContent, start, end)
 				break;
 			case 'u':
 				// 下划线
+				event.preventDefault();
 				processedContent = `++${mdContent.value.substring(start, end)}++`
 				_cursorPosition = end + 2
 				textReplace(processedContent, start, end)
 				break;
 			case 'm':
 				// 下划线
+				event.preventDefault();
 				processedContent = `==${mdContent.value.substring(start, end)}==`
 				_cursorPosition = end + 2
 				textReplace(processedContent, start, end)
 				break;
 			case 'q':
 				// 引用
-				processedContent = `> ${mdContent.value.substring(start, end)}`
+				event.preventDefault();
+				processedContent = `\n> ${mdContent.value.substring(start, end)}`
 				_cursorPosition = end + 1
 				textReplace(processedContent, start, end)
 				break;
 			case 'I':
-				// 引用
+				// kuai
 				event.preventDefault();
 				processedContent = `${'`'}${mdContent.value.substring(start, end)}${'`'}`
 				_cursorPosition = end + 1
@@ -842,13 +849,15 @@ function shortcutFn(e, key) {
 		// 插入类的快捷键，没有start
 		let end = textRange.end ? textRange.end : mdContent.value.length
 		switch (key) {
-			case 'l':
-				// 引用
+			case 'L':
+				event.preventDefault();
+				// line
 				mdInsert('\n\n---\n', end)
 				_cursorPosition = end + 6
 				break;
 			case 'C':
-				// 引用
+				event.preventDefault();
+				// 代码
 				mdInsert(`\n\n${'```请输入语言类型'} \n\n${'```'}`, end)
 				_cursorPosition = end + 5 + 7
 				break;
@@ -1030,20 +1039,27 @@ onBeforeMount(() => {
 
 				}
 			}
-
+			if (token.tag == 'hr') {
+				token.attrSet('style',
+					`
+					margin: 5px 0px;
+					`
+				)
+			}
 			// 为“引用”添加样式
 			if (token.type == "blockquote_open") {
 				token.attrSet('style',
 					`
 					position: relative;
-					padding: 0 16px;
+					padding: 5px 16px;
+					margin: 5px 0px;
 					border-left: 4px solid gray;
     				margin-bottom: 16px;
 					`
 				)
 			}
 			// 为h添加id
-			if (token.tag.includes('h') && token.type == "heading_open") {
+			if (token.tag != 'hr' && token.tag.includes('h') && token.type == "heading_open") {
 				let _id = 'h-' + token.attrGet('id')
 				token.attrSet('id', _id)
 				token.attrPush(['ref', _id]);
@@ -1088,7 +1104,49 @@ onBeforeMount(() => {
 	});
 })
 onMounted(() => {
-	console.log(platform.value);
+	mdContent.value = `# 欢迎来到Markboat!!!
+这是一款简洁易用，自适应样式且可跨端的 Markdown 编辑器。可将.md文件格式转换为浏览器和微信可预览的.html和.wxml。
+> 源码地址：https://github.com/JalenChung/Markboat
+
+---
+### 开发初衷 and 愿景
+在**Markboat**开发之前，我就一直有记录和总结自己学到的技术知识点的习惯。因为Markdown的结构简单的纯文本特性，且被广泛的应用和接受，它成为了我的写记录的首选。虽说市面大多Markdown编辑器都已经能够满足编辑需求，但还不够方便。我希望能够有一个可以随时随地可被编辑和以各种形式浏览的文档，所以**Markboat**的开发被提上了日程。
+未来，我还将实现后端支持、更好的多端适配和更全面的功能。
+
+---
+
+### Markboat 特色功能⭐
+* 多端适应
+* 更加灵活的行号定位
+* 分离式的目录和锚点
+* 多端导出！多端共享！（此功能目前还在开发中）
+
+---
+ 
+### 以下是 Markdown 功能支持（仅仅常用介绍，详细点击上方语法帮助，转至官方文档）
+目录
+[[toc]]
+# 一级标题
+## 二级标题
+### 三级标题
+#### 四级标题
+##### 五级标题
+###### 六级标题
+* 无序列表段落1
+* 无序列表段落2
+1. 有序列表段落1
+2. 有序列表段落1
+### 快捷键支持
+#### Ctrl + b
+字体**加粗**
+#### Ctrl + d
+~~删除线~~
+#### Ctrl + i
+*斜体*
+#### Ctrl + u
+++下划线++`
+	mdInput()
+	// console.log(platform.value);
 
 	// 设备判断 - 初始化 - 绑定方法
 	if (platform.value == 'h5') {
